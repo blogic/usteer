@@ -4,6 +4,7 @@ PKG_NAME:=usteer
 PKG_VERSION:=$(shell git show -s --format=%cd --date=short)
 PKG_RELEASE:=1
 
+PKG_BUILD_DEPENDS:=libpcap
 PKG_BUILD_PARALLEL:=1
 
 PKG_FILE_DEPENDS:=$(CURDIR)/../..
