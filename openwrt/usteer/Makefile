@@ -31,7 +31,7 @@ endef
 define Package/usteer/install
 	$(INSTALL_DIR) $(1)/sbin $(1)/etc/init.d $(1)/etc/config
 	$(CP) ./files/* $(1)/
-	$(CP) $(PKG_BUILD_DIR)/usteer $(1)/sbin/
+	$(CP) $(PKG_BUILD_DIR)/usteerd $(1)/sbin/
 endef
 
 $(eval $(call BuildPackage,usteer))
