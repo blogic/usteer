@@ -126,6 +126,8 @@ struct usteer_config {
 	uint32_t max_retry_band;
 	uint32_t seen_policy_timeout;
 
+	bool assoc_steering;
+
 	uint32_t band_steering_threshold;
 	uint32_t load_balancing_threshold;
 

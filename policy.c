@@ -143,6 +143,9 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 	if (type == EVENT_TYPE_AUTH)
 		return true;
 
+	if (type == EVENT_TYPE_ASSOC && !config.assoc_steering)
+		return true;
+
 	if (si->stats[type].blocked_cur >= config.max_retry_band) {
 		MSG_T_STA("max_retry_band", si->sta->addr,
 			"max retry (%u) exceeded\n", config.max_retry_band);
