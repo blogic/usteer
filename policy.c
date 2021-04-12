@@ -140,7 +140,7 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 	struct sta_info *si_new;
 	int min_signal;
 
-	if (type == EVENT_TYPE_ASSOC)
+	if (type == EVENT_TYPE_AUTH)
 		return true;
 
 	if (si->stats[type].blocked_cur >= config.max_retry_band) {
