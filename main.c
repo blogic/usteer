@@ -22,6 +22,7 @@
 #include <syslog.h>
 
 #include "usteer.h"
+#include "event.h"
 
 struct ubus_context *ubus_ctx;
 struct usteer_config config = {};
@@ -34,6 +35,14 @@ const char * const event_types[__EVENT_TYPE_MAX] = {
 	[EVENT_TYPE_AUTH] = "auth",
 	[EVENT_TYPE_ASSOC] = "assoc",
 };
+
+void log_msg(char *msg)
+{
+	if (config.syslog)
+		syslog(LOG_INFO, "%s\n", msg);
+	else
+		fprintf(stderr, "%s\n", msg);
+}
 
 void debug_msg(int level, const char *func, int line, const char *format, ...)
 {
@@ -143,6 +152,7 @@ int main(int argc, char **argv)
 
 	openlog("usteer", 0, LOG_USER);
 
+	config_set_event_log_types(NULL);
 	usteer_update_time();
 	uloop_init();
 

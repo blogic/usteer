@@ -72,9 +72,6 @@ usteer_sta_info_timeout(struct usteer_timeout_queue *q, struct usteer_timeout *t
 {
 	struct sta_info *si = container_of(t, struct sta_info, timeout);
 
-	MSG_T_STA("local_sta_timeout", si->sta->addr,
-		"timeout expired, deleting sta info\n");
-
 	usteer_sta_info_del(si);
 }
 
@@ -183,10 +180,8 @@ usteer_handle_sta_event(struct usteer_node *node, const uint8_t *addr,
 	si->stats[type].requests++;
 
 	diff = si->stats[type].blocked_last_time - current_time;
-	if (diff > config.sta_block_timeout) {
+	if (diff > config.sta_block_timeout)
 		si->stats[type].blocked_cur = 0;
-		MSG_T_STA("sta_block_timeout", addr, "timeout expired\n");
-	}
 
 	ret = usteer_check_request(si, type);
 	if (!ret) {

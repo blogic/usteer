@@ -123,6 +123,9 @@ void config_set_interfaces(struct blob_attr *data)
 	struct blob_attr *cur;
 	int rem;
 
+	if (!data)
+		return;
+
 	if (!blobmsg_check_attr_list(data, BLOBMSG_TYPE_STRING))
 		return;
 
@@ -484,9 +487,6 @@ usteer_send_update_timer(struct uloop_timeout *t)
 {
 	struct usteer_node *node;
 	void *c;
-
-	MSG_T("remote_update_interval", "start remote update (interval=%u)\n",
-		config.remote_update_interval);
 
 	usteer_update_time();
 	uloop_timeout_set(t, config.remote_update_interval);

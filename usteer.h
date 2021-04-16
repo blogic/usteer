@@ -156,6 +156,7 @@ struct usteer_config {
 	uint32_t load_kick_reason_code;
 
 	const char *node_up_script;
+	uint32_t event_log_mask;
 };
 
 struct sta_info_stats {
@@ -165,18 +166,13 @@ struct sta_info_stats {
 	uint32_t blocked_last_time;
 };
 
-#define __roam_trigger_states \
-	_S(IDLE) \
-	_S(SCAN) \
-	_S(SCAN_DONE) \
-	_S(WAIT_KICK) \
-	_S(NOTIFY_KICK) \
-	_S(KICK)
-
 enum roam_trigger_state {
-#define _S(n) ROAM_TRIGGER_##n,
-	__roam_trigger_states
-#undef _S
+	ROAM_TRIGGER_IDLE,
+	ROAM_TRIGGER_SCAN,
+	ROAM_TRIGGER_SCAN_DONE,
+	ROAM_TRIGGER_WAIT_KICK,
+	ROAM_TRIGGER_NOTIFY_KICK,
+	ROAM_TRIGGER_KICK,
 };
 
 struct sta_info {
@@ -219,6 +215,7 @@ extern struct ubus_context *ubus_ctx;
 extern struct usteer_config config;
 extern struct list_head node_handlers;
 extern struct avl_tree stations;
+extern struct ubus_object usteer_obj;
 extern uint64_t current_time;
 extern const char * const event_types[__EVENT_TYPE_MAX];
 

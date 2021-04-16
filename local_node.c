@@ -340,9 +340,6 @@ usteer_local_node_update(struct uloop_timeout *timeout)
 	ln = container_of(timeout, struct usteer_local_node, update);
 	node = &ln->node;
 
-	MSG_T("local_sta_udpate", "timeout (%u) expired\n",
-		config.local_sta_update);
-
 	list_for_each_entry(h, &node_handlers, list) {
 		if (!h->update_node)
 			continue;
@@ -476,9 +473,13 @@ node_list_cb(struct ubus_context *ctx, struct ubus_object_data *obj, void *priv)
 
 void config_set_node_up_script(struct blob_attr *data)
 {
-	const char *val = blobmsg_get_string(data);
+	const char *val;
 	struct usteer_node *node;
 
+	if (!data)
+		return;
+
+	val = blobmsg_get_string(data);
 	if (node_up_script && !strcmp(val, node_up_script))
 		return;
 

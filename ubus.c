@@ -26,6 +26,7 @@
 
 #include "usteer.h"
 #include "node.h"
+#include "event.h"
 
 static struct blob_buf b;
 
@@ -165,7 +166,8 @@ struct cfg_item {
 	_cfg(U32, load_kick_min_clients), \
 	_cfg(U32, load_kick_reason_code), \
 	_cfg(ARRAY_CB, interfaces), \
-	_cfg(STRING_CB, node_up_script)
+	_cfg(STRING_CB, node_up_script), \
+	_cfg(ARRAY_CB, event_log_types)
 
 enum cfg_items {
 #define _cfg(_type, _name) CFG_##_name
@@ -239,15 +241,18 @@ usteer_ubus_set_config(struct ubus_context *ctx, struct ubus_object *obj,
 
 	blobmsg_parse(config_policy, __CFG_MAX, tb, blob_data(msg), blob_len(msg));
 	for (i = 0; i < __CFG_MAX; i++) {
-		if (!tb[i])
-			continue;
-
 		switch(config_data[i].type) {
 		case CFG_BOOL:
+			if (!tb[i])
+				continue;
+
 			*config_data[i].ptr.BOOL = blobmsg_get_u8(tb[i]);
 			break;
 		case CFG_I32:
 		case CFG_U32:
+			if (!tb[i])
+				continue;
+
 			*config_data[i].ptr.U32 = blobmsg_get_u32(tb[i]);
 			break;
 		case CFG_ARRAY_CB:
@@ -325,7 +330,7 @@ static const struct ubus_method usteer_methods[] = {
 static struct ubus_object_type usteer_obj_type =
 	UBUS_OBJECT_TYPE("usteer", usteer_methods);
 
-static struct ubus_object usteer_obj = {
+struct ubus_object usteer_obj = {
 	.name = "usteer",
 	.type = &usteer_obj_type,
 	.methods = usteer_methods,
@@ -384,10 +389,6 @@ int usteer_ubus_trigger_client_scan(struct sta_info *si)
 
 	si->scan_band = !si->scan_band;
 
-	MSG_T_STA("load_kick_reason_code", si->sta->addr,
-		"tell hostapd to issue a client beacon request (5ghz: %d)\n",
-		si->scan_band);
-
 	blob_buf_init(&b, 0);
 	blobmsg_printf(&b, "addr", MAC_ADDR_FMT, MAC_ADDR_DATA(si->sta->addr));
 	blobmsg_add_u32(&b, "mode", 1);
@@ -400,10 +401,6 @@ int usteer_ubus_trigger_client_scan(struct sta_info *si)
 void usteer_ubus_kick_client(struct sta_info *si)
 {
 	struct usteer_local_node *ln = container_of(si->node, struct usteer_local_node, node);
-
-	MSG_T_STA("load_kick_reason_code", si->sta->addr,
-		"tell hostapd to kick client with reason code %u\n",
-		config.load_kick_reason_code);
 
 	blob_buf_init(&b, 0);
 	blobmsg_printf(&b, "addr", MAC_ADDR_FMT, MAC_ADDR_DATA(si->sta->addr));

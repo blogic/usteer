@@ -32,13 +32,6 @@
 	((const uint8_t *)(_a))[4], \
 	((const uint8_t *)(_a))[5]
 
-#define MSG_T_STA(_option, _sta_addr, _format, ...) \
-	MSG(DEBUG_ALL, "TESTCASE=" _option ",STA=" MAC_ADDR_FMT ": "  _format, \
-	MAC_ADDR_DATA(_sta_addr), ##__VA_ARGS__)
-
-#define MSG_T(_option,  _format, ...) \
-	MSG(DEBUG_ALL, "TESTCASE=" _option ": "  _format,  ##__VA_ARGS__)
-
 enum usteer_debug {
 	MSG_FATAL,
 	MSG_INFO,
@@ -48,6 +41,7 @@ enum usteer_debug {
 	MSG_DEBUG_ALL,
 };
 
+extern void log_msg(char *msg);
 extern void debug_msg(int level, const char *func, int line, const char *format, ...);
 extern void debug_msg_cont(int level, const char *format, ...);
 
