@@ -105,7 +105,7 @@ config usteer
 	# - load_kick_no_client
 	# - load_kick_client
 	# - signal_kick
-	#option event_log_types ''
+	#list event_log_types ''
 
 	# List of SSIDs to enable steering on
 	#list ssid_list ''
