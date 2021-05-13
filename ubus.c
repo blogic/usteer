@@ -167,7 +167,8 @@ struct cfg_item {
 	_cfg(U32, load_kick_reason_code), \
 	_cfg(ARRAY_CB, interfaces), \
 	_cfg(STRING_CB, node_up_script), \
-	_cfg(ARRAY_CB, event_log_types)
+	_cfg(ARRAY_CB, event_log_types), \
+	_cfg(ARRAY_CB, ssid_list)
 
 enum cfg_items {
 #define _cfg(_type, _name) CFG_##_name
@@ -292,7 +293,7 @@ usteer_ubus_local_info(struct ubus_context *ctx, struct ubus_object *obj,
 
 	blob_buf_init(&b, 0);
 
-	avl_for_each_element(&local_nodes, node, avl)
+	for_each_local_node(node)
 		usteer_dump_node_info(node);
 
 	ubus_send_reply(ctx, req, b.head);
@@ -375,7 +376,7 @@ int usteer_ubus_notify_client_disassoc(struct sta_info *si)
 	blobmsg_printf(&b, "addr", MAC_ADDR_FMT, MAC_ADDR_DATA(si->sta->addr));
 	blobmsg_add_u32(&b, "duration", config.roam_kick_delay);
 	c = blobmsg_open_array(&b, "neighbors");
-	avl_for_each_element(&local_nodes, node, avl)
+	for_each_local_node(node)
 		usteer_add_nr_entry(si->node, node);
 	avl_for_each_element(&remote_nodes, rn, avl)
 		usteer_add_nr_entry(si->node, &rn->node);

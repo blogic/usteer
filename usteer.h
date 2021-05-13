@@ -63,6 +63,7 @@ struct usteer_node {
 	struct blob_attr *script_data;
 	char ssid[33];
 
+	bool disabled;
 	int freq;
 	int noise;
 	int n_assoc;
@@ -157,6 +158,8 @@ struct usteer_config {
 
 	const char *node_up_script;
 	uint32_t event_log_mask;
+
+	struct blob_attr *ssid_list;
 };
 
 struct sta_info_stats {
@@ -251,6 +254,9 @@ void config_get_interfaces(struct blob_buf *buf);
 
 void config_set_node_up_script(struct blob_attr *data);
 void config_get_node_up_script(struct blob_buf *buf);
+
+void config_set_ssid_list(struct blob_attr *data);
+void config_get_ssid_list(struct blob_buf *buf);
 
 int usteer_interface_init(void);
 void usteer_interface_add(const char *name);

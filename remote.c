@@ -492,7 +492,7 @@ usteer_send_update_timer(struct uloop_timeout *t)
 	uloop_timeout_set(t, config.remote_update_interval);
 
 	c = usteer_update_init();
-	avl_for_each_element(&local_nodes, node, avl)
+	for_each_local_node(node)
 		usteer_send_node(node, NULL);
 
 	usteer_update_send(c);

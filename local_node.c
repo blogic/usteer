@@ -42,6 +42,7 @@ usteer_local_node_state_reset(struct usteer_local_node *ln)
 		return;
 
 	ubus_abort_request(ubus_ctx, &ln->req);
+	uloop_timeout_cancel(&ln->req_timer);
 	ln->req_state = REQ_IDLE;
 }
 
@@ -58,7 +59,6 @@ usteer_free_node(struct ubus_context *ctx, struct usteer_local_node *ln)
 
 	usteer_local_node_state_reset(ln);
 	usteer_sta_node_cleanup(&ln->node);
-	uloop_timeout_cancel(&ln->req_timer);
 	uloop_timeout_cancel(&ln->update);
 	avl_delete(&local_nodes, &ln->node.avl);
 	ubus_unregister_subscriber(ctx, &ln->ev);
@@ -288,7 +288,7 @@ usteer_local_node_prepare_rrm_set(struct usteer_local_node *ln)
 	void *c;
 
 	c = blobmsg_open_array(&b, "list");
-	avl_for_each_element(&local_nodes, node, avl)
+	for_each_local_node(node)
 		usteer_add_rrm_data(ln, node);
 	avl_for_each_element(&remote_nodes, rn, avl)
 		usteer_add_rrm_data(ln, &rn->node);
@@ -374,7 +374,6 @@ usteer_get_node(struct ubus_context *ctx, const char *name)
 	ln->req_timer.cb = usteer_local_node_state_next;
 	ubus_register_subscriber(ctx, &ln->ev);
 	avl_insert(&local_nodes, &node->avl);
-	uloop_timeout_set(&ln->update, 1);
 	INIT_LIST_HEAD(&node->sta_info);
 
 	return ln;
@@ -392,7 +391,42 @@ usteer_node_run_update_script(struct usteer_node *node)
 	val = alloca(strlen(node_up_script) + strlen(ln->iface) + 8);
 	sprintf(val, "%s '%s'", node_up_script, ln->iface);
 	if (system(val))
-		fprintf(stderr, "failed to execute %s\n", val);
+		MSG(INFO, "failed to execute %s\n", val);
+}
+
+static void
+usteer_check_node_enabled(struct usteer_local_node *ln)
+{
+	bool ssid_disabled = config.ssid_list;
+	struct blob_attr *cur;
+	int rem;
+
+	blobmsg_for_each_attr(cur, config.ssid_list, rem) {
+		if (strcmp(blobmsg_get_string(cur), ln->node.ssid) != 0)
+			continue;
+
+		ssid_disabled = false;
+		break;
+	}
+
+	if (ln->node.disabled == ssid_disabled)
+		return;
+
+	ln->node.disabled = ssid_disabled;
+
+	if (ssid_disabled) {
+		MSG(INFO, "Disconnecting from local node %s\n", usteer_node_name(&ln->node));
+		usteer_local_node_state_reset(ln);
+		usteer_sta_node_cleanup(&ln->node);
+		uloop_timeout_cancel(&ln->update);
+		ubus_unsubscribe(ubus_ctx, &ln->ev, ln->obj_id);
+		return;
+	}
+
+	MSG(INFO, "Connecting to local node %s\n", usteer_node_name(&ln->node));
+	ubus_subscribe(ubus_ctx, &ln->ev, ln->obj_id);
+	uloop_timeout_set(&ln->update, 1);
+	usteer_node_run_update_script(&ln->node);
 }
 
 static void
@@ -407,7 +441,7 @@ usteer_register_node(struct ubus_context *ctx, const char *name, uint32_t id)
 	if (strncmp(name, "hostapd.", iface - name) != 0)
 		return;
 
-	MSG(INFO, "Connecting to local node %s\n", name);
+	MSG(INFO, "Creating local node %s\n", name);
 	ln = usteer_get_node(ctx, name);
 	ln->obj_id = id;
 	ln->iface = usteer_node_name(&ln->node) + offset;
@@ -423,8 +457,6 @@ usteer_register_node(struct ubus_context *ctx, const char *name, uint32_t id)
 	blobmsg_add_u8(&b, "bss_transition", 1);
 	ubus_invoke(ctx, id, "bss_mgmt_enable", b.head, NULL, NULL, 1000);
 
-	ubus_subscribe(ctx, &ln->ev, id);
-
 	list_for_each_entry(h, &node_handlers, list) {
 		if (!h->init_node)
 			continue;
@@ -432,7 +464,8 @@ usteer_register_node(struct ubus_context *ctx, const char *name, uint32_t id)
 		h->init_node(&ln->node);
 	}
 
-	usteer_node_run_update_script(&ln->node);
+	ln->node.disabled = true;
+	usteer_check_node_enabled(ln);
 }
 
 static void
@@ -492,7 +525,7 @@ void config_set_node_up_script(struct blob_attr *data)
 
 	node_up_script = strdup(val);
 
-	avl_for_each_element(&local_nodes, node, avl)
+	for_each_local_node(node)
 		usteer_node_run_update_script(node);
 }
 
@@ -502,6 +535,27 @@ void config_get_node_up_script(struct blob_buf *buf)
 		return;
 
 	blobmsg_add_string(buf, "node_up_script", node_up_script);
+}
+
+void config_set_ssid_list(struct blob_attr *data)
+{
+	struct usteer_local_node *ln;
+
+	free(config.ssid_list);
+
+	if (data)
+		config.ssid_list = blob_memdup(data);
+	else
+		config.ssid_list = NULL;
+
+	avl_for_each_element(&local_nodes, ln, node.avl)
+		usteer_check_node_enabled(ln);
+}
+
+void config_get_ssid_list(struct blob_buf *buf)
+{
+	if (config.ssid_list)
+		blobmsg_add_blob(buf, config.ssid_list);
 }
 
 void
