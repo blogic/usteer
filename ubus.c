@@ -281,6 +281,11 @@ usteer_dump_node_info(struct usteer_node *node)
 		blobmsg_add_field(&b, BLOBMSG_TYPE_ARRAY, "rrm_nr",
 				  blobmsg_data(node->rrm_nr),
 				  blobmsg_data_len(node->rrm_nr));
+	if (node->script_data)
+		blobmsg_add_field(&b, BLOBMSG_TYPE_TABLE, "script_data",
+				  blob_data(node->script_data),
+				  blob_len(node->script_data));
+
 	blobmsg_close_table(&b, c);
 }
 
