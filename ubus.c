@@ -307,6 +307,27 @@ usteer_ubus_local_info(struct ubus_context *ctx, struct ubus_object *obj,
 }
 
 static int
+usteer_ubus_remote_hosts(struct ubus_context *ctx, struct ubus_object *obj,
+			 struct ubus_request_data *req, const char *method,
+			 struct blob_attr *msg)
+{
+	struct usteer_remote_host *host;
+	void *c;
+
+	blob_buf_init(&b, 0);
+
+	avl_for_each_element(&remote_hosts, host, avl) {
+		c = blobmsg_open_table(&b, host->addr);
+		blobmsg_add_u32(&b, "id", (uint32_t)(uintptr_t)host->avl.key);
+		blobmsg_close_table(&b, c);
+	}
+
+	ubus_send_reply(ctx, req, b.head);
+
+	return 0;
+}
+
+static int
 usteer_ubus_remote_info(struct ubus_context *ctx, struct ubus_object *obj,
 		       struct ubus_request_data *req, const char *method,
 		       struct blob_attr *msg)
@@ -398,6 +419,7 @@ usteer_ubus_update_node_data(struct ubus_context *ctx, struct ubus_object *obj,
 
 static const struct ubus_method usteer_methods[] = {
 	UBUS_METHOD_NOARG("local_info", usteer_ubus_local_info),
+	UBUS_METHOD_NOARG("remote_hosts", usteer_ubus_remote_hosts),
 	UBUS_METHOD_NOARG("remote_info", usteer_ubus_remote_info),
 	UBUS_METHOD_NOARG("get_clients", usteer_ubus_get_clients),
 	UBUS_METHOD("get_client_info", usteer_ubus_get_client_info, client_arg),

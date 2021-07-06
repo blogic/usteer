@@ -86,6 +86,7 @@ struct usteer_remote_node {
 
 extern struct avl_tree local_nodes;
 extern struct list_head remote_nodes;
+extern struct avl_tree remote_hosts;
 
 #define for_each_local_node(node)			\
 	avl_for_each_element(&local_nodes, node, avl)	\

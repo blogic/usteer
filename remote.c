@@ -60,7 +60,7 @@ static int remote_host_cmp(const void *k1, const void *k2, void *ptr)
 
 static VLIST_TREE(interfaces, avl_strcmp, interfaces_update_cb, true, true);
 LIST_HEAD(remote_nodes);
-static AVL_TREE(remote_hosts, remote_host_cmp, false, NULL);
+AVL_TREE(remote_hosts, remote_host_cmp, false, NULL);
 
 static const char *
 interface_name(struct interface *iface)
