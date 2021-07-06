@@ -267,7 +267,7 @@ usteer_ubus_set_config(struct ubus_context *ctx, struct ubus_object *obj,
 }
 
 static void
-usteer_dump_node_info(struct usteer_node *node)
+usteer_dump_node(struct usteer_node *node)
 {
 	void *c;
 
@@ -299,7 +299,7 @@ usteer_ubus_local_info(struct ubus_context *ctx, struct ubus_object *obj,
 	blob_buf_init(&b, 0);
 
 	for_each_local_node(node)
-		usteer_dump_node_info(node);
+		usteer_dump_node(node);
 
 	ubus_send_reply(ctx, req, b.head);
 
@@ -316,7 +316,7 @@ usteer_ubus_remote_info(struct ubus_context *ctx, struct ubus_object *obj,
 	blob_buf_init(&b, 0);
 
 	avl_for_each_element(&remote_nodes, rn, avl)
-		usteer_dump_node_info(&rn->node);
+		usteer_dump_node(&rn->node);
 
 	ubus_send_reply(ctx, req, b.head);
 

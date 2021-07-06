@@ -52,7 +52,7 @@ static const char * const uev_select_reason[] = {
 };
 
 static void
-usteer_event_add_node_info(struct usteer_node *node)
+usteer_event_add_node_status(struct usteer_node *node)
 {
 	blobmsg_add_u32(&b, "load", node->load);
 	blobmsg_add_u32(&b, "assoc", node->n_assoc);
@@ -102,7 +102,7 @@ usteer_event_send_ubus(struct uevent *ev)
 
 	if (ev->node_cur) {
 		c = blobmsg_open_table(&b, "local");
-		usteer_event_add_node_info(ev->node_cur);
+		usteer_event_add_node_status(ev->node_cur);
 		blobmsg_close_table(&b, c);
 	}
 
@@ -111,7 +111,7 @@ usteer_event_send_ubus(struct uevent *ev)
 		blobmsg_add_string(&b, "name", usteer_node_name(ev->node_other));
 		if (ev->si_other)
 			blobmsg_add_u32(&b, "signal", (int32_t)ev->si_other->signal);
-		usteer_event_add_node_info(ev->node_other);
+		usteer_event_add_node_status(ev->node_other);
 		blobmsg_close_table(&b, c);
 	}
 
