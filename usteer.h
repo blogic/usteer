@@ -24,6 +24,7 @@
 #include <libubox/blobmsg.h>
 #include <libubox/uloop.h>
 #include <libubox/utils.h>
+#include <libubox/kvlist.h>
 #include <libubus.h>
 #include "utils.h"
 #include "timeout.h"
@@ -229,6 +230,7 @@ bool usteer_handle_sta_event(struct usteer_node *node, const uint8_t *addr,
 
 void usteer_local_nodes_init(struct ubus_context *ctx);
 void usteer_local_node_kick(struct usteer_local_node *ln);
+void usteer_local_node_update_script_data(struct usteer_local_node *ln);
 
 void usteer_ubus_init(struct ubus_context *ctx);
 void usteer_ubus_kick_client(struct sta_info *si);

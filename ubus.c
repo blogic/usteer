@@ -323,6 +323,79 @@ usteer_ubus_remote_info(struct ubus_context *ctx, struct ubus_object *obj,
 	return 0;
 }
 
+enum {
+	NODE_DATA_NODE,
+	NODE_DATA_VALUES,
+	__NODE_DATA_MAX,
+};
+
+static const struct blobmsg_policy set_node_data_policy[] = {
+	[NODE_DATA_NODE] = { "node", BLOBMSG_TYPE_STRING },
+	[NODE_DATA_VALUES] = { "data", BLOBMSG_TYPE_TABLE },
+};
+
+static const struct blobmsg_policy del_node_data_policy[] = {
+	[NODE_DATA_NODE] = { "node", BLOBMSG_TYPE_STRING },
+	[NODE_DATA_VALUES] = { "names", BLOBMSG_TYPE_ARRAY },
+};
+
+static void
+__usteer_ubus_update_node_data(struct usteer_local_node *ln, struct blob_attr *data,
+			       bool delete)
+{
+	struct blob_attr *cur;
+	int rem;
+
+	blobmsg_for_each_attr(cur, data, rem) {
+		if (delete)
+			kvlist_delete(&ln->script_data, blobmsg_get_string(cur));
+		else
+			kvlist_set(&ln->script_data, blobmsg_name(cur), cur);
+	}
+
+	usteer_local_node_update_script_data(ln);
+}
+
+static int
+usteer_ubus_update_node_data(struct ubus_context *ctx, struct ubus_object *obj,
+			     struct ubus_request_data *req, const char *method,
+			     struct blob_attr *msg)
+{
+	const struct blobmsg_policy *policy;
+	struct blob_attr *tb[__NODE_DATA_MAX];
+	struct usteer_local_node *ln;
+	struct blob_attr *val;
+	const char *name;
+	bool delete;
+
+	delete = !strncmp(method, "del", 3);
+	policy = delete ? del_node_data_policy : set_node_data_policy;
+
+	blobmsg_parse(policy, __NODE_DATA_MAX, tb, blob_data(msg), blob_len(msg));
+	if (!tb[NODE_DATA_NODE] || !tb[NODE_DATA_VALUES])
+		return UBUS_STATUS_INVALID_ARGUMENT;
+
+	name = blobmsg_get_string(tb[NODE_DATA_NODE]);
+	val = tb[NODE_DATA_VALUES];
+	if (delete && blobmsg_check_array(val, BLOBMSG_TYPE_STRING) < 0)
+		return UBUS_STATUS_INVALID_ARGUMENT;
+
+	if (strcmp(name, "*") != 0) {
+		ln = avl_find_element(&local_nodes, name, ln, node.avl);
+		if (!ln)
+			return UBUS_STATUS_NOT_FOUND;
+
+		__usteer_ubus_update_node_data(ln, val, delete);
+
+		return 0;
+	}
+
+	avl_for_each_element(&local_nodes, ln, node.avl)
+		__usteer_ubus_update_node_data(ln, val, delete);
+
+	return 0;
+}
+
 static const struct ubus_method usteer_methods[] = {
 	UBUS_METHOD_NOARG("local_info", usteer_ubus_local_info),
 	UBUS_METHOD_NOARG("remote_info", usteer_ubus_remote_info),
@@ -331,6 +404,8 @@ static const struct ubus_method usteer_methods[] = {
 	UBUS_METHOD_NOARG("get_config", usteer_ubus_get_config),
 	UBUS_METHOD("set_config", usteer_ubus_set_config, config_policy),
 	UBUS_METHOD("update_config", usteer_ubus_set_config, config_policy),
+	UBUS_METHOD("set_node_data", usteer_ubus_update_node_data, set_node_data_policy),
+	UBUS_METHOD("delete_node_data", usteer_ubus_update_node_data, del_node_data_policy),
 };
 
 static struct ubus_object_type usteer_obj_type =

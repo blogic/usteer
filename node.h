@@ -51,6 +51,8 @@ struct usteer_local_node {
 
 	uint64_t time, time_busy;
 
+	struct kvlist script_data;
+
 	struct {
 		bool present;
 		struct uloop_timeout update;
