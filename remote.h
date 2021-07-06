@@ -45,7 +45,7 @@ enum {
 	APMSG_NODE_SSID,
 	APMSG_NODE_MAX_ASSOC,
 	APMSG_NODE_RRM_NR,
-	APMSG_NODE_SCRIPT_DATA,
+	APMSG_NODE_NODE_INFO,
 	__APMSG_NODE_MAX
 };
 
@@ -59,7 +59,7 @@ struct apmsg_node {
 	int load;
 	struct blob_attr *stations;
 	struct blob_attr *rrm_nr;
-	struct blob_attr *script_data;
+	struct blob_attr *node_info;
 };
 
 enum {

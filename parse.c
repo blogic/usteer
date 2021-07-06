@@ -60,7 +60,7 @@ bool parse_apmsg_node(struct apmsg_node *msg, struct blob_attr *data)
 		[APMSG_NODE_NOISE] = { .type = BLOB_ATTR_INT32 },
 		[APMSG_NODE_LOAD] = { .type = BLOB_ATTR_INT32 },
 		[APMSG_NODE_RRM_NR] = { .type = BLOB_ATTR_NESTED },
-		[APMSG_NODE_SCRIPT_DATA] = { .type = BLOB_ATTR_NESTED },
+		[APMSG_NODE_NODE_INFO] = { .type = BLOB_ATTR_NESTED },
 	};
 	struct blob_attr *tb[__APMSG_NODE_MAX];
 	struct blob_attr *cur;
@@ -105,7 +105,7 @@ bool parse_apmsg_node(struct apmsg_node *msg, struct blob_attr *data)
 			msg->rrm_nr = NULL;
 	}
 
-	msg->script_data = tb[APMSG_NODE_SCRIPT_DATA];
+	msg->node_info = tb[APMSG_NODE_NODE_INFO];
 
 	return true;
 }

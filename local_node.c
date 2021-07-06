@@ -62,7 +62,7 @@ usteer_free_node(struct ubus_context *ctx, struct usteer_local_node *ln)
 	uloop_timeout_cancel(&ln->update);
 	avl_delete(&local_nodes, &ln->node.avl);
 	ubus_unregister_subscriber(ctx, &ln->ev);
-	kvlist_free(&ln->script_data);
+	kvlist_free(&ln->node_info);
 	free(ln);
 }
 
@@ -375,7 +375,7 @@ usteer_get_node(struct ubus_context *ctx, const char *name)
 	ln->req_timer.cb = usteer_local_node_state_next;
 	ubus_register_subscriber(ctx, &ln->ev);
 	avl_insert(&local_nodes, &node->avl);
-	kvlist_init(&ln->script_data, kvlist_blob_len);
+	kvlist_init(&ln->node_info, kvlist_blob_len);
 	INIT_LIST_HEAD(&node->sta_info);
 
 	return ln;
@@ -506,13 +506,13 @@ node_list_cb(struct ubus_context *ctx, struct ubus_object_data *obj, void *priv)
 	usteer_register_node(ctx, obj->path, obj->id);
 }
 
-void usteer_local_node_update_script_data(struct usteer_local_node *ln)
+void usteer_local_node_update_node_info(struct usteer_local_node *ln)
 {
 	struct blob_attr *val;
 	const char *name;
 
 	blob_buf_init(&b, 0);
-	kvlist_for_each(&ln->script_data, name, val)
+	kvlist_for_each(&ln->node_info, name, val)
 		blobmsg_add_field(&b, blobmsg_type(val), name,
 				  blobmsg_data(val), blobmsg_len(val));
 
@@ -520,7 +520,7 @@ void usteer_local_node_update_script_data(struct usteer_local_node *ln)
 	if (!blobmsg_len(val))
 		val = NULL;
 
-	usteer_node_set_blob(&ln->node.script_data, val);
+	usteer_node_set_blob(&ln->node.node_info, val);
 }
 
 void config_set_node_up_script(struct blob_attr *data)

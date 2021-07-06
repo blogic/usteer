@@ -61,7 +61,7 @@ struct usteer_node {
 	enum usteer_node_type type;
 
 	struct blob_attr *rrm_nr;
-	struct blob_attr *script_data;
+	struct blob_attr *node_info;
 	char ssid[33];
 
 	bool disabled;
@@ -230,7 +230,7 @@ bool usteer_handle_sta_event(struct usteer_node *node, const uint8_t *addr,
 
 void usteer_local_nodes_init(struct ubus_context *ctx);
 void usteer_local_node_kick(struct usteer_local_node *ln);
-void usteer_local_node_update_script_data(struct usteer_local_node *ln);
+void usteer_local_node_update_node_info(struct usteer_local_node *ln);
 
 void usteer_ubus_init(struct ubus_context *ctx);
 void usteer_ubus_kick_client(struct sta_info *si);

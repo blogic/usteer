@@ -51,7 +51,7 @@ struct usteer_local_node {
 
 	uint64_t time, time_busy;
 
-	struct kvlist script_data;
+	struct kvlist node_info;
 
 	struct {
 		bool present;

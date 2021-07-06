@@ -240,7 +240,7 @@ interface_add_node(struct interface *iface, const char *addr, unsigned long id, 
 	node->iface = iface;
 	snprintf(node->node.ssid, sizeof(node->node.ssid), "%s", msg.ssid);
 	usteer_node_set_blob(&node->node.rrm_nr, msg.rrm_nr);
-	usteer_node_set_blob(&node->node.script_data, msg.script_data);
+	usteer_node_set_blob(&node->node.node_info, msg.node_info);
 
 	blob_for_each_attr(cur, msg.stations, rem)
 		interface_add_station(node, cur);
@@ -422,10 +422,10 @@ static void usteer_send_node(struct usteer_node *node, struct sta_info *sta)
 		blob_nest_end(&buf, r);
 	}
 
-	if (node->script_data)
-		blob_put(&buf, APMSG_NODE_SCRIPT_DATA,
-			 blob_data(node->script_data),
-			 blob_len(node->script_data));
+	if (node->node_info)
+		blob_put(&buf, APMSG_NODE_NODE_INFO,
+			 blob_data(node->node_info),
+			 blob_len(node->node_info));
 
 	s = blob_nest_start(&buf, APMSG_NODE_STATIONS);
 

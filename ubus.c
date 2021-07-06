@@ -281,10 +281,10 @@ usteer_dump_node(struct usteer_node *node)
 		blobmsg_add_field(&b, BLOBMSG_TYPE_ARRAY, "rrm_nr",
 				  blobmsg_data(node->rrm_nr),
 				  blobmsg_data_len(node->rrm_nr));
-	if (node->script_data)
-		blobmsg_add_field(&b, BLOBMSG_TYPE_TABLE, "script_data",
-				  blob_data(node->script_data),
-				  blob_len(node->script_data));
+	if (node->node_info)
+		blobmsg_add_field(&b, BLOBMSG_TYPE_TABLE, "node_info",
+				  blob_data(node->node_info),
+				  blob_len(node->node_info));
 
 	blobmsg_close_table(&b, c);
 }
@@ -348,12 +348,12 @@ __usteer_ubus_update_node_data(struct usteer_local_node *ln, struct blob_attr *d
 
 	blobmsg_for_each_attr(cur, data, rem) {
 		if (delete)
-			kvlist_delete(&ln->script_data, blobmsg_get_string(cur));
+			kvlist_delete(&ln->node_info, blobmsg_get_string(cur));
 		else
-			kvlist_set(&ln->script_data, blobmsg_name(cur), cur);
+			kvlist_set(&ln->node_info, blobmsg_name(cur), cur);
 	}
 
-	usteer_local_node_update_script_data(ln);
+	usteer_local_node_update_node_info(ln);
 }
 
 static int

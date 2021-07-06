@@ -94,9 +94,9 @@ decode_node(struct blob_attr *data)
 		fprintf(stderr, "\n");
 	}
 
-	if (msg.script_data) {
-		char *data = blobmsg_format_json(msg.script_data, true);
-		fprintf(stderr, "\t\tScript data: %s\n", data);
+	if (msg.node_info) {
+		char *data = blobmsg_format_json(msg.node_info, true);
+		fprintf(stderr, "\t\tNode info: %s\n", data);
 		free(data);
 	}
 
