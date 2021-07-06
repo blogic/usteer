@@ -479,7 +479,7 @@ static void
 usteer_check_timeout(void)
 {
 	struct usteer_remote_node *node, *tmp;
-	int timeout = config.remote_node_timeout / config.remote_update_interval;
+	int timeout = config.remote_node_timeout;
 
 	list_for_each_entry_safe(node, tmp, &remote_nodes, list) {
 		if (node->check++ > timeout)

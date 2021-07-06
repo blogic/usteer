@@ -89,7 +89,7 @@ void usteer_init_defaults(void)
 	config.load_balancing_threshold = 5;
 	config.remote_update_interval = 1000;
 	config.initial_connect_delay = 0;
-	config.remote_node_timeout = 120 * 1000;
+	config.remote_node_timeout = 10;
 
 	config.roam_kick_delay = 100;
 	config.roam_scan_tries = 3;
