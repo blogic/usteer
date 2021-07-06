@@ -26,6 +26,7 @@
 
 struct ubus_context *ubus_ctx;
 struct usteer_config config = {};
+struct blob_attr *host_info_blob;
 uint64_t current_time;
 
 LIST_HEAD(node_handlers);

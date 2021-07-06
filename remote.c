@@ -305,6 +305,7 @@ interface_recv_msg(struct interface *iface, struct in_addr *addr, void *buf, int
 	inet_ntop(AF_INET, addr, addr_str, sizeof(addr_str));
 
 	host = interface_get_host(addr_str, msg.id);
+	usteer_node_set_blob(&host->host_info, msg.host_info);
 
 	blob_for_each_attr(cur, msg.nodes, rem)
 		interface_add_node(host, cur);
@@ -492,6 +493,10 @@ usteer_update_init(void)
 	blob_buf_init(&buf, 0);
 	blob_put_int32(&buf, APMSG_ID, local_id);
 	blob_put_int32(&buf, APMSG_SEQ, ++msg_seq);
+	if (host_info_blob)
+		blob_put(&buf, APMSG_HOST_INFO,
+			 blob_data(host_info_blob),
+			 blob_len(host_info_blob));
 
 	return blob_nest_start(&buf, APMSG_NODES);
 }

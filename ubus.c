@@ -29,6 +29,7 @@
 #include "event.h"
 
 static struct blob_buf b;
+static KVLIST(host_info, kvlist_blob_len);
 
 static int
 usteer_ubus_get_clients(struct ubus_context *ctx, struct ubus_object *obj,
@@ -319,6 +320,10 @@ usteer_ubus_remote_hosts(struct ubus_context *ctx, struct ubus_object *obj,
 	avl_for_each_element(&remote_hosts, host, avl) {
 		c = blobmsg_open_table(&b, host->addr);
 		blobmsg_add_u32(&b, "id", (uint32_t)(uintptr_t)host->avl.key);
+		if (host->host_info)
+			blobmsg_add_field(&b, BLOBMSG_TYPE_TABLE, "host_info",
+					  blobmsg_data(host->host_info),
+					  blobmsg_len(host->host_info));
 		blobmsg_close_table(&b, c);
 	}
 
@@ -361,20 +366,36 @@ static const struct blobmsg_policy del_node_data_policy[] = {
 };
 
 static void
-__usteer_ubus_update_node_data(struct usteer_local_node *ln, struct blob_attr *data,
-			       bool delete)
+usteer_update_kvlist_data(struct kvlist *kv, struct blob_attr *data,
+			  bool delete)
 {
 	struct blob_attr *cur;
 	int rem;
 
 	blobmsg_for_each_attr(cur, data, rem) {
 		if (delete)
-			kvlist_delete(&ln->node_info, blobmsg_get_string(cur));
+			kvlist_delete(kv, blobmsg_get_string(cur));
 		else
-			kvlist_set(&ln->node_info, blobmsg_name(cur), cur);
+			kvlist_set(kv, blobmsg_name(cur), cur);
 	}
+}
 
-	usteer_local_node_update_node_info(ln);
+static void
+usteer_update_kvlist_blob(struct blob_attr **dest, struct kvlist *kv)
+{
+	struct blob_attr *val;
+	const char *name;
+
+	blob_buf_init(&b, 0);
+	kvlist_for_each(kv, name, val)
+		blobmsg_add_field(&b, blobmsg_type(val), name,
+				  blobmsg_data(val), blobmsg_len(val));
+
+	val = b.head;
+	if (!blobmsg_len(val))
+		val = NULL;
+
+	usteer_node_set_blob(dest, val);
 }
 
 static int
@@ -406,13 +427,14 @@ usteer_ubus_update_node_data(struct ubus_context *ctx, struct ubus_object *obj,
 		if (!ln)
 			return UBUS_STATUS_NOT_FOUND;
 
-		__usteer_ubus_update_node_data(ln, val, delete);
+		usteer_update_kvlist_data(&ln->node_info, val, delete);
+		usteer_update_kvlist_blob(&ln->node.node_info, &ln->node_info);
 
 		return 0;
 	}
 
-	avl_for_each_element(&local_nodes, ln, node.avl)
-		__usteer_ubus_update_node_data(ln, val, delete);
+	usteer_update_kvlist_data(&host_info, val, delete);
+	usteer_update_kvlist_blob(&host_info_blob, &host_info);
 
 	return 0;
 }

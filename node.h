@@ -70,6 +70,7 @@ struct usteer_remote_host {
 	struct avl_node avl;
 
 	struct list_head nodes;
+	struct blob_attr *host_info;
 	char *addr;
 };
 

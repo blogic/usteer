@@ -506,23 +506,6 @@ node_list_cb(struct ubus_context *ctx, struct ubus_object_data *obj, void *priv)
 	usteer_register_node(ctx, obj->path, obj->id);
 }
 
-void usteer_local_node_update_node_info(struct usteer_local_node *ln)
-{
-	struct blob_attr *val;
-	const char *name;
-
-	blob_buf_init(&b, 0);
-	kvlist_for_each(&ln->node_info, name, val)
-		blobmsg_add_field(&b, blobmsg_type(val), name,
-				  blobmsg_data(val), blobmsg_len(val));
-
-	val = b.head;
-	if (!blobmsg_len(val))
-		val = NULL;
-
-	usteer_node_set_blob(&ln->node.node_info, val);
-}
-
 void config_set_node_up_script(struct blob_attr *data)
 {
 	const char *val;

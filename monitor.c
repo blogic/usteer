@@ -117,6 +117,11 @@ decode_packet(struct blob_attr *data)
 	}
 
 	fprintf(stderr, "id=%08x, seq=%d\n", msg.id, msg.seq);
+	if (msg.host_info) {
+		char *data = blobmsg_format_json(msg.host_info, true);
+		fprintf(stderr, "\tHost info: %s\n", data);
+		free(data);
+	}
 
 	blob_for_each_attr(cur, msg.nodes, rem)
 		decode_node(cur);
