@@ -543,7 +543,7 @@ void config_set_ssid_list(struct blob_attr *data)
 
 	free(config.ssid_list);
 
-	if (data)
+	if (data && blobmsg_len(data))
 		config.ssid_list = blob_memdup(data);
 	else
 		config.ssid_list = NULL;
