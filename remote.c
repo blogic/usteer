@@ -50,7 +50,7 @@ interfaces_update_cb(struct vlist_tree *tree,
 		     struct vlist_node *node_new,
 		     struct vlist_node *node_old);
 
-static int remote_node_cmp(const void *k1, const void *k2, void *ptr)
+static int remote_host_cmp(const void *k1, const void *k2, void *ptr)
 {
 	unsigned long v1 = (unsigned long) k1;
 	unsigned long v2 = (unsigned long) k2;
@@ -59,7 +59,8 @@ static int remote_node_cmp(const void *k1, const void *k2, void *ptr)
 }
 
 static VLIST_TREE(interfaces, avl_strcmp, interfaces_update_cb, true, true);
-AVL_TREE(remote_nodes, remote_node_cmp, true, NULL);
+LIST_HEAD(remote_nodes);
+static AVL_TREE(remote_hosts, remote_host_cmp, false, NULL);
 
 static const char *
 interface_name(struct interface *iface)
@@ -183,42 +184,72 @@ interface_add_station(struct usteer_remote_node *node, struct blob_attr *data)
 static void
 remote_node_free(struct usteer_remote_node *node)
 {
-	avl_delete(&remote_nodes, &node->avl);
+	struct usteer_remote_host *host = node->host;
+
+	list_del(&node->list);
+	list_del(&node->host_list);
 	usteer_sta_node_cleanup(&node->node);
 	free(node);
+
+	if (!list_empty(&host->nodes))
+		return;
+
+	avl_delete(&remote_hosts, &host->avl);
+	free(host);
+}
+
+static struct usteer_remote_host *
+interface_get_host(const char *addr, unsigned long id)
+{
+	struct usteer_remote_host *host;
+
+	host = avl_find_element(&remote_hosts, (void *)id, host, avl);
+	if (host)
+		goto out;
+
+	host = calloc(1, sizeof(*host));
+	host->avl.key = (void *)id;
+	INIT_LIST_HEAD(&host->nodes);
+	avl_insert(&remote_hosts, &host->avl);
+
+out:
+	if (host->addr && strcmp(host->addr, addr) != 0)
+		return host;
+
+	free(host->addr);
+	host->addr = strdup(addr);
+
+	return host;
 }
 
 static struct usteer_remote_node *
-interface_get_node(const char *addr, unsigned long id, const char *name)
+interface_get_node(struct usteer_remote_host *host, const char *name)
 {
 	struct usteer_remote_node *node;
-	int addr_len = strlen(addr);
+	int addr_len = strlen(host->addr);
 	char *buf;
 
-	node = avl_find_element(&remote_nodes, (void *) id, node, avl);
-	while (node && node->avl.key == (void *) id) {
+	list_for_each_entry(node, &host->nodes, host_list)
 		if (!strcmp(node->name, name))
 			return node;
 
-		node = avl_next_element(node, avl);
-	}
-
 	node = calloc_a(sizeof(*node), &buf, addr_len + 1 + strlen(name) + 1);
-	node->avl.key = (void *) id;
 	node->node.type = NODE_TYPE_REMOTE;
 
-	sprintf(buf, "%s#%s", addr, name);
+	sprintf(buf, "%s#%s", host->addr, name);
 	node->node.avl.key = buf;
 	node->name = buf + addr_len + 1;
+	node->host = host;
 	INIT_LIST_HEAD(&node->node.sta_info);
 
-	avl_insert(&remote_nodes, &node->avl);
+	list_add_tail(&node->list, &remote_nodes);
+	list_add_tail(&node->host_list, &host->nodes);
 
 	return node;
 }
 
 static void
-interface_add_node(struct interface *iface, const char *addr, unsigned long id, struct blob_attr *data)
+interface_add_node(struct usteer_remote_host *host, struct blob_attr *data)
 {
 	struct usteer_remote_node *node;
 	struct apmsg_node msg;
@@ -230,14 +261,13 @@ interface_add_node(struct interface *iface, const char *addr, unsigned long id, 
 		return;
 	}
 
-	node = interface_get_node(addr, id, msg.name);
+	node = interface_get_node(host, msg.name);
 	node->check = 0;
 	node->node.freq = msg.freq;
 	node->node.n_assoc = msg.n_assoc;
 	node->node.max_assoc = msg.max_assoc;
 	node->node.noise = msg.noise;
 	node->node.load = msg.load;
-	node->iface = iface;
 	snprintf(node->node.ssid, sizeof(node->node.ssid), "%s", msg.ssid);
 	usteer_node_set_blob(&node->node.rrm_nr, msg.rrm_nr);
 	usteer_node_set_blob(&node->node.node_info, msg.node_info);
@@ -249,6 +279,7 @@ interface_add_node(struct interface *iface, const char *addr, unsigned long id, 
 static void
 interface_recv_msg(struct interface *iface, struct in_addr *addr, void *buf, int len)
 {
+	struct usteer_remote_host *host;
 	char addr_str[INET_ADDRSTRLEN];
 	struct blob_attr *data = buf;
 	struct apmsg msg;
@@ -273,8 +304,10 @@ interface_recv_msg(struct interface *iface, struct in_addr *addr, void *buf, int
 
 	inet_ntop(AF_INET, addr, addr_str, sizeof(addr_str));
 
+	host = interface_get_host(addr_str, msg.id);
+
 	blob_for_each_attr(cur, msg.nodes, rem)
-		interface_add_node(iface, addr_str, msg.id, cur);
+		interface_add_node(host, cur);
 }
 
 static struct interface *
@@ -447,7 +480,7 @@ usteer_check_timeout(void)
 	struct usteer_remote_node *node, *tmp;
 	int timeout = config.remote_node_timeout / config.remote_update_interval;
 
-	avl_for_each_element_safe(&remote_nodes, node, avl, tmp) {
+	list_for_each_entry_safe(node, tmp, &remote_nodes, list) {
 		if (node->check++ > timeout)
 			remote_node_free(node);
 	}

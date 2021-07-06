@@ -315,7 +315,7 @@ usteer_ubus_remote_info(struct ubus_context *ctx, struct ubus_object *obj,
 
 	blob_buf_init(&b, 0);
 
-	avl_for_each_element(&remote_nodes, rn, avl)
+	for_each_remote_node(rn)
 		usteer_dump_node(&rn->node);
 
 	ubus_send_reply(ctx, req, b.head);
@@ -458,7 +458,7 @@ int usteer_ubus_notify_client_disassoc(struct sta_info *si)
 	c = blobmsg_open_array(&b, "neighbors");
 	for_each_local_node(node)
 		usteer_add_nr_entry(si->node, node);
-	avl_for_each_element(&remote_nodes, rn, avl)
+	for_each_remote_node(rn)
 		usteer_add_nr_entry(si->node, &rn->node);
 	blobmsg_close_array(&b, c);
 	return ubus_invoke(ubus_ctx, ln->obj_id, "wnm_disassoc_imminent", b.head, NULL, 0, 100);

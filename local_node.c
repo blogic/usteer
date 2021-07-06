@@ -291,7 +291,7 @@ usteer_local_node_prepare_rrm_set(struct usteer_local_node *ln)
 	c = blobmsg_open_array(&b, "list");
 	for_each_local_node(node)
 		usteer_add_rrm_data(ln, node);
-	avl_for_each_element(&remote_nodes, rn, avl)
+	for_each_remote_node(rn)
 		usteer_add_rrm_data(ln, &rn->node);
 	blobmsg_close_array(&b, c);
 }

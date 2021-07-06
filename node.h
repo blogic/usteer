@@ -65,22 +65,33 @@ struct usteer_local_node {
 };
 
 struct interface;
-struct usteer_remote_node {
+
+struct usteer_remote_host {
 	struct avl_node avl;
+
+	struct list_head nodes;
+	char *addr;
+};
+
+struct usteer_remote_node {
+	struct list_head list;
+	struct list_head host_list;
 	const char *name;
 
+	struct usteer_remote_host *host;
 	struct usteer_node node;
-	struct interface *iface;
 
 	int check;
 };
 
 extern struct avl_tree local_nodes;
-extern struct avl_tree remote_nodes;
+extern struct list_head remote_nodes;
 
 #define for_each_local_node(node)			\
 	avl_for_each_element(&local_nodes, node, avl)	\
 		if (!node->disabled)
 
+#define for_each_remote_node(rn)			\
+	list_for_each_entry(rn, &remote_nodes, list)
 
 #endif
