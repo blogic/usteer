@@ -21,13 +21,17 @@
 #include <stdarg.h>
 #include <syslog.h>
 
+#include <libubox/blobmsg_json.h>
+
 #include "usteer.h"
 #include "event.h"
+#include "node.h"
 
 struct ubus_context *ubus_ctx;
 struct usteer_config config = {};
 struct blob_attr *host_info_blob;
 uint64_t current_time;
+static int dump_time;
 
 LIST_HEAD(node_handlers);
 
@@ -125,17 +129,50 @@ static int usage(const char *prog)
 		"               5: include extra testing messages\n"
 		" -i <name>:    Connect to other instances on interface <name>\n"
 		" -s:		Output log messages via syslog instead of stderr\n"
+		" -D <n>:	Do not daemonize, wait for <n> seconds and print\n"
+		"		remote hosts and nodes\n"
 		"\n", prog);
 	return 1;
 }
 
+static void
+usteer_dump_timeout(struct uloop_timeout *t)
+{
+	struct usteer_remote_host *host;
+	struct usteer_remote_node *rn;
+	struct blob_buf b = {};
+	char *str;
+	void *c;
+
+	blob_buf_init(&b, 0);
+
+	c = blobmsg_open_table(&b, "hosts");
+	avl_for_each_element(&remote_hosts, host, avl)
+		usteer_dump_host(&b, host);
+	blobmsg_close_table(&b, c);
+
+	c = blobmsg_open_table(&b, "nodes");
+	for_each_remote_node(rn)
+		usteer_dump_node(&b, &rn->node);
+	blobmsg_close_table(&b, c);
+
+	str = blobmsg_format_json(b.head, true);
+	blob_buf_free(&b);
+
+	puts(str);
+	free(str);
+
+	uloop_end();
+}
+
 int main(int argc, char **argv)
 {
+	struct uloop_timeout dump_timer;
 	int ch;
 
 	usteer_init_defaults();
 
-	while ((ch = getopt(argc, argv, "i:sv")) != -1) {
+	while ((ch = getopt(argc, argv, "D:i:sv")) != -1) {
 		switch(ch) {
 		case 'v':
 			config.debug_level++;
@@ -145,6 +182,9 @@ int main(int argc, char **argv)
 			break;
 		case 'i':
 			usteer_interface_add(optarg);
+			break;
+		case 'D':
+			dump_time = atoi(optarg);
 			break;
 		default:
 			return usage(argv[0]);
@@ -164,9 +204,14 @@ int main(int argc, char **argv)
 	}
 
 	ubus_add_uloop(ubus_ctx);
-	usteer_ubus_init(ubus_ctx);
 	usteer_interface_init();
-	usteer_local_nodes_init(ubus_ctx);
+	if (dump_time) {
+		dump_timer.cb = usteer_dump_timeout;
+		uloop_timeout_set(&dump_timer, dump_time * 1000);
+	} else {
+		usteer_ubus_init(ubus_ctx);
+		usteer_local_nodes_init(ubus_ctx);
+	}
 	uloop_run();
 
 	uloop_done();

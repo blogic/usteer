@@ -53,6 +53,7 @@ enum usteer_node_type {
 
 struct sta_info;
 struct usteer_local_node;
+struct usteer_remote_host;
 
 struct usteer_node {
 	struct avl_node avl;
@@ -268,5 +269,8 @@ void usteer_send_sta_update(struct sta_info *si);
 int usteer_lua_init(void);
 int usteer_lua_ubus_init(void);
 void usteer_run_hook(const char *name, const char *arg);
+
+void usteer_dump_node(struct blob_buf *buf, struct usteer_node *node);
+void usteer_dump_host(struct blob_buf *buf, struct usteer_remote_host *host);
 
 #endif

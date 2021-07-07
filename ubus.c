@@ -267,27 +267,39 @@ usteer_ubus_set_config(struct ubus_context *ctx, struct ubus_object *obj,
 	return 0;
 }
 
-static void
-usteer_dump_node(struct usteer_node *node)
+void usteer_dump_node(struct blob_buf *buf, struct usteer_node *node)
 {
 	void *c;
 
-	c = blobmsg_open_table(&b, usteer_node_name(node));
-	blobmsg_add_u32(&b, "freq", node->freq);
-	blobmsg_add_u32(&b, "n_assoc", node->n_assoc);
-	blobmsg_add_u32(&b, "noise", node->noise);
-	blobmsg_add_u32(&b, "load", node->load);
-	blobmsg_add_u32(&b, "max_assoc", node->max_assoc);
+	c = blobmsg_open_table(buf, usteer_node_name(node));
+	blobmsg_add_u32(buf, "freq", node->freq);
+	blobmsg_add_u32(buf, "n_assoc", node->n_assoc);
+	blobmsg_add_u32(buf, "noise", node->noise);
+	blobmsg_add_u32(buf, "load", node->load);
+	blobmsg_add_u32(buf, "max_assoc", node->max_assoc);
 	if (node->rrm_nr)
-		blobmsg_add_field(&b, BLOBMSG_TYPE_ARRAY, "rrm_nr",
+		blobmsg_add_field(buf, BLOBMSG_TYPE_ARRAY, "rrm_nr",
 				  blobmsg_data(node->rrm_nr),
 				  blobmsg_data_len(node->rrm_nr));
 	if (node->node_info)
-		blobmsg_add_field(&b, BLOBMSG_TYPE_TABLE, "node_info",
+		blobmsg_add_field(buf, BLOBMSG_TYPE_TABLE, "node_info",
 				  blob_data(node->node_info),
 				  blob_len(node->node_info));
 
-	blobmsg_close_table(&b, c);
+	blobmsg_close_table(buf, c);
+}
+
+void usteer_dump_host(struct blob_buf *buf, struct usteer_remote_host *host)
+{
+	void *c;
+
+	c = blobmsg_open_table(buf, host->addr);
+	blobmsg_add_u32(buf, "id", (uint32_t)(uintptr_t)host->avl.key);
+	if (host->host_info)
+		blobmsg_add_field(buf, BLOBMSG_TYPE_TABLE, "host_info",
+				  blobmsg_data(host->host_info),
+				  blobmsg_len(host->host_info));
+	blobmsg_close_table(buf, c);
 }
 
 static int
@@ -300,7 +312,7 @@ usteer_ubus_local_info(struct ubus_context *ctx, struct ubus_object *obj,
 	blob_buf_init(&b, 0);
 
 	for_each_local_node(node)
-		usteer_dump_node(node);
+		usteer_dump_node(&b, node);
 
 	ubus_send_reply(ctx, req, b.head);
 
@@ -313,19 +325,11 @@ usteer_ubus_remote_hosts(struct ubus_context *ctx, struct ubus_object *obj,
 			 struct blob_attr *msg)
 {
 	struct usteer_remote_host *host;
-	void *c;
 
 	blob_buf_init(&b, 0);
 
-	avl_for_each_element(&remote_hosts, host, avl) {
-		c = blobmsg_open_table(&b, host->addr);
-		blobmsg_add_u32(&b, "id", (uint32_t)(uintptr_t)host->avl.key);
-		if (host->host_info)
-			blobmsg_add_field(&b, BLOBMSG_TYPE_TABLE, "host_info",
-					  blobmsg_data(host->host_info),
-					  blobmsg_len(host->host_info));
-		blobmsg_close_table(&b, c);
-	}
+	avl_for_each_element(&remote_hosts, host, avl)
+		usteer_dump_host(&b, host);
 
 	ubus_send_reply(ctx, req, b.head);
 
@@ -342,7 +346,7 @@ usteer_ubus_remote_info(struct ubus_context *ctx, struct ubus_object *obj,
 	blob_buf_init(&b, 0);
 
 	for_each_remote_node(rn)
-		usteer_dump_node(&rn->node);
+		usteer_dump_node(&b, &rn->node);
 
 	ubus_send_reply(ctx, req, b.head);
 

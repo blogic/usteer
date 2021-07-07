@@ -526,6 +526,9 @@ usteer_send_update_timer(struct uloop_timeout *t)
 	struct usteer_node *node;
 	void *c;
 
+	if (avl_is_empty(&local_nodes) && !host_info_blob)
+		return;
+
 	usteer_update_time();
 	uloop_timeout_set(t, config.remote_update_interval);
 
