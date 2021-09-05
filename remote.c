@@ -213,7 +213,7 @@ interface_get_host(const char *addr, unsigned long id)
 	avl_insert(&remote_hosts, &host->avl);
 
 out:
-	if (host->addr && strcmp(host->addr, addr) != 0)
+	if (host->addr && !strcmp(host->addr, addr))
 		return host;
 
 	free(host->addr);
