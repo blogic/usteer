@@ -277,10 +277,9 @@ interface_add_node(struct usteer_remote_host *host, struct blob_attr *data)
 }
 
 static void
-interface_recv_msg(struct interface *iface, struct in_addr *addr, void *buf, int len)
+interface_recv_msg(struct interface *iface, char *addr_str, void *buf, int len)
 {
 	struct usteer_remote_host *host;
-	char addr_str[INET_ADDRSTRLEN];
 	struct blob_attr *data = buf;
 	struct apmsg msg;
 	struct blob_attr *cur;
@@ -301,8 +300,6 @@ interface_recv_msg(struct interface *iface, struct in_addr *addr, void *buf, int
 
 	MSG(NETWORK, "Received message on %s (id=%08x->%08x seq=%d len=%d)\n",
 		interface_name(iface), msg.id, local_id, msg.seq, len);
-
-	inet_ntop(AF_INET, addr, addr_str, sizeof(addr_str));
 
 	host = interface_get_host(addr_str, msg.id);
 	usteer_node_set_blob(&host->host_info, msg.host_info);
@@ -325,11 +322,12 @@ interface_find_by_ifindex(int index)
 }
 
 static void
-interface_recv(struct uloop_fd *u, unsigned int events)
+interface_recv_v4(struct uloop_fd *u, unsigned int events)
 {
 	static char buf[APMGR_BUFLEN];
 	static char cmsg_buf[( CMSG_SPACE(sizeof(struct in_pktinfo)) + sizeof(int)) + 1];
 	static struct sockaddr_in sin;
+	char addr_str[INET_ADDRSTRLEN];
 	static struct iovec iov = {
 		.iov_base = buf,
 		.iov_len = sizeof(buf)
@@ -381,11 +379,80 @@ interface_recv(struct uloop_fd *u, unsigned int events)
 			continue;
 		}
 
-		interface_recv_msg(iface, &sin.sin_addr, buf, len);
+		inet_ntop(AF_INET, &sin.sin_addr, addr_str, sizeof(addr_str));
+
+		interface_recv_msg(iface, addr_str, buf, len);
 	} while (1);
 }
 
-static void interface_send_msg(struct interface *iface, struct blob_attr *data)
+
+static void interface_recv_v6(struct uloop_fd *u, unsigned int events){
+	static char buf[APMGR_BUFLEN];
+	static char cmsg_buf[( CMSG_SPACE(sizeof(struct in6_pktinfo)) + sizeof(int)) + 1];
+	static struct sockaddr_in6 sin;
+	static struct iovec iov = {
+		.iov_base = buf,
+		.iov_len = sizeof(buf)
+	};
+	static struct msghdr msg = {
+		.msg_name = &sin,
+		.msg_namelen = sizeof(sin),
+		.msg_iov = &iov,
+		.msg_iovlen = 1,
+		.msg_control = cmsg_buf,
+		.msg_controllen = sizeof(cmsg_buf),
+	};
+	struct cmsghdr *cmsg;
+	char addr_str[INET6_ADDRSTRLEN];
+	int len;
+
+	do {
+		struct in6_pktinfo *pkti = NULL;
+		struct interface *iface;
+
+		len = recvmsg(u->fd, &msg, 0);
+		if (len < 0) {
+			switch (errno) {
+			case EAGAIN:
+				return;
+			case EINTR:
+				continue;
+			default:
+				perror("recvmsg");
+				uloop_fd_delete(u);
+				return;
+			}
+		}
+
+		for (cmsg = CMSG_FIRSTHDR(&msg); cmsg; cmsg = CMSG_NXTHDR(&msg, cmsg)) {
+			if (cmsg->cmsg_type != IPV6_PKTINFO)
+				continue;
+
+			pkti = (struct in6_pktinfo *) CMSG_DATA(cmsg);
+		}
+
+		if (!pkti) {
+			MSG(DEBUG, "Received packet without ifindex\n");
+			continue;
+		}
+
+		iface = interface_find_by_ifindex(pkti->ipi6_ifindex);
+		if (!iface) {
+			MSG(DEBUG, "Received packet from unconfigured interface %d\n", pkti->ipi6_ifindex);
+			continue;
+		}
+
+		inet_ntop(AF_INET6, &sin.sin6_addr, addr_str, sizeof(addr_str));
+		if (sin.sin6_addr.s6_addr[0] == 0) {
+			/* IPv4 mapped address. Ignore. */
+			continue;
+		}
+
+		interface_recv_msg(iface, addr_str, buf, len);
+	} while (1);
+}
+
+static void interface_send_msg_v4(struct interface *iface, struct blob_attr *data)
 {
 	static size_t cmsg_data[( CMSG_SPACE(sizeof(struct in_pktinfo)) / sizeof(size_t)) + 1];
 	static struct sockaddr_in a;
@@ -419,6 +486,28 @@ static void interface_send_msg(struct interface *iface, struct blob_attr *data)
 
 	if (sendmsg(remote_fd.fd, &m, 0) < 0)
 		perror("sendmsg");
+}
+
+
+static void interface_send_msg_v6(struct interface *iface, struct blob_attr *data) {
+	static struct sockaddr_in6 groupSock = {};
+
+	groupSock.sin6_family = AF_INET6;
+	inet_pton(AF_INET6, APMGR_V6_MCAST_GROUP, &groupSock.sin6_addr);
+	groupSock.sin6_port = htons(APMGR_PORT);
+
+	setsockopt(remote_fd.fd, IPPROTO_IPV6, IPV6_MULTICAST_IF, &iface->ifindex, sizeof(iface->ifindex));
+
+	if (sendto(remote_fd.fd, data, blob_pad_len(data), 0, (const struct sockaddr *)&groupSock, sizeof(groupSock)) < 0)
+		perror("sendmsg");
+}
+
+static void interface_send_msg(struct interface *iface, struct blob_attr *data){
+	if (config.ipv6) {
+		interface_send_msg_v6(iface, data);
+	} else {
+		interface_send_msg_v4(iface, data);
+	}
 }
 
 static void usteer_send_sta_info(struct sta_info *sta)
@@ -558,23 +647,16 @@ usteer_init_local_id(void)
 	return 0;
 }
 
-static void
-usteer_reload_timer(struct uloop_timeout *t)
-{
+static int usteer_create_v4_socket() {
 	int yes = 1;
 	int fd;
-
-	if (remote_fd.registered) {
-		uloop_fd_delete(&remote_fd);
-		close(remote_fd.fd);
-	}
 
 	fd = usock(USOCK_UDP | USOCK_SERVER | USOCK_NONBLOCK |
 		   USOCK_NUMERIC | USOCK_IPV4ONLY,
 		   "0.0.0.0", APMGR_PORT_STR);
 	if (fd < 0) {
 		perror("usock");
-		return;
+		return - 1;
 	}
 
 	if (setsockopt(fd, IPPROTO_IP, IP_PKTINFO, &yes, sizeof(yes)) < 0)
@@ -583,8 +665,61 @@ usteer_reload_timer(struct uloop_timeout *t)
 	if (setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &yes, sizeof(yes)) < 0)
 		perror("setsockopt(SO_BROADCAST)");
 
-	remote_fd.fd = fd;
-	remote_fd.cb = interface_recv;
+	return fd;
+}
+
+
+static int usteer_create_v6_socket() {
+	struct interface *iface;
+	struct ipv6_mreq group;
+	int yes = 1;
+	int fd;
+
+	fd = usock(USOCK_UDP | USOCK_SERVER | USOCK_NONBLOCK |
+		   USOCK_NUMERIC | USOCK_IPV6ONLY,
+		   "::", APMGR_PORT_STR);
+	if (fd < 0) {
+		perror("usock");
+		return fd;
+	}
+
+	if (!inet_pton(AF_INET6, APMGR_V6_MCAST_GROUP, &group.ipv6mr_multiaddr.s6_addr))
+		perror("inet_pton(AF_INET6)");
+
+	/* Membership has to be added for every interface we listen on. */
+	vlist_for_each_element(&interfaces, iface, node) {
+		group.ipv6mr_interface = iface->ifindex;
+		if(setsockopt(fd, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, (char *)&group, sizeof group) < 0)
+			perror("setsockopt(IPV6_ADD_MEMBERSHIP)");
+	}
+
+	if (setsockopt(fd, IPPROTO_IPV6, IPV6_RECVPKTINFO, &yes, sizeof(yes)) < 0)
+		perror("setsockopt(IPV6_RECVPKTINFO)");
+
+	if (setsockopt(fd, SOL_SOCKET, SO_BROADCAST, &yes, sizeof(yes)) < 0)
+		perror("setsockopt(SO_BROADCAST)");
+
+	return fd;
+}
+
+static void usteer_reload_timer(struct uloop_timeout *t) {
+	/* Remove uloop descriptor */
+	if (remote_fd.fd && remote_fd.registered) {
+		uloop_fd_delete(&remote_fd);
+		close(remote_fd.fd);
+	}
+
+	if (config.ipv6) {
+		remote_fd.fd = usteer_create_v6_socket();
+		remote_fd.cb = interface_recv_v6;
+	} else {
+		remote_fd.fd = usteer_create_v4_socket();
+		remote_fd.cb = interface_recv_v4;
+	}
+
+	if (remote_fd.fd < 0)
+		return;
+
 	uloop_fd_add(&remote_fd, ULOOP_READ);
 }
 

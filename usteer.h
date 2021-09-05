@@ -33,6 +33,9 @@
 
 #define __STR(x)		#x
 #define _STR(x)			__STR(x)
+
+#define APMGR_V6_MCAST_GROUP	"ff02::4150"
+
 #define APMGR_PORT		16720 /* AP */
 #define APMGR_PORT_STR		_STR(APMGR_PORT)
 #define APMGR_BUFLEN		(64 * 1024)
@@ -121,6 +124,8 @@ struct usteer_node_handler {
 struct usteer_config {
 	bool syslog;
 	uint32_t debug_level;
+
+	bool ipv6;
 
 	uint32_t sta_block_timeout;
 	uint32_t local_sta_timeout;

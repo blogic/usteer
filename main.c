@@ -204,7 +204,6 @@ int main(int argc, char **argv)
 	}
 
 	ubus_add_uloop(ubus_ctx);
-	usteer_interface_init();
 	if (dump_time) {
 		dump_timer.cb = usteer_dump_timeout;
 		uloop_timeout_set(&dump_timer, dump_time * 1000);

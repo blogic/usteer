@@ -5,6 +5,9 @@ config usteer
 	# Log messages to syslog (0/1)
 	option 'syslog' '1'
 
+	# Use IPv6 for remote exchange
+	option 'ipv6' '0'
+
 	# Minimum level of logged messages
 	# 0 = fatal
 	# 1 = info

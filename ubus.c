@@ -142,6 +142,7 @@ struct cfg_item {
 #define __config_items \
 	_cfg(BOOL, syslog), \
 	_cfg(U32, debug_level), \
+	_cfg(BOOL, ipv6), \
 	_cfg(U32, sta_block_timeout), \
 	_cfg(U32, local_sta_timeout), \
 	_cfg(U32, local_sta_update), \
@@ -263,6 +264,8 @@ usteer_ubus_set_config(struct ubus_context *ctx, struct ubus_object *obj,
 			break;
 		}
 	}
+
+	usteer_interface_init();
 
 	return 0;
 }
