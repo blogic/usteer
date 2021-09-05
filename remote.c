@@ -195,6 +195,7 @@ remote_node_free(struct usteer_remote_node *node)
 		return;
 
 	avl_delete(&remote_hosts, &host->avl);
+	free(host->addr);
 	free(host);
 }
 
