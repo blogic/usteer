@@ -7,3 +7,4 @@ install_manifest.txt
 /ap-monitor
 /fakeap
 .vscode/
+*.patch
