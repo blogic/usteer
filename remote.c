@@ -402,7 +402,7 @@ static void interface_send_msg(struct interface *iface, struct blob_attr *data)
 	struct cmsghdr *cmsg;
 
 	a.sin_family = AF_INET;
-	a.sin_port = htons(16720);
+	a.sin_port = htons(APMGR_PORT);
 	a.sin_addr.s_addr = ~0;
 
 	memset(cmsg_data, 0, sizeof(cmsg_data));
