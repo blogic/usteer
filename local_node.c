@@ -447,7 +447,7 @@ usteer_register_node(struct ubus_context *ctx, const char *name, uint32_t id)
 	ln = usteer_get_node(ctx, name);
 	ln->obj_id = id;
 	ln->iface = usteer_node_name(&ln->node) + offset;
-	ln->ifindex = if_nametoindex(iface);
+	ln->ifindex = if_nametoindex(ln->iface);
 
 	blob_buf_init(&b, 0);
 	blobmsg_add_u32(&b, "notify_response", 1);
