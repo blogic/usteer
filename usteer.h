@@ -67,6 +67,7 @@ struct usteer_node {
 	struct blob_attr *rrm_nr;
 	struct blob_attr *node_info;
 	char ssid[33];
+	uint8_t bssid[6];
 
 	bool disabled;
 	int freq;

@@ -200,7 +200,12 @@ static void nl80211_init_node(struct usteer_node *node)
 	if (!tb[NL80211_ATTR_WIPHY])
 		goto nla_put_failure;
 
+	if (!tb[NL80211_ATTR_MAC])
+		goto nla_put_failure;
+
 	ln->wiphy = nla_get_u32(tb[NL80211_ATTR_WIPHY]);
+
+	memcpy(node->bssid, nla_data(tb[NL80211_ATTR_MAC]), ETH_ALEN);
 
 	if (tb[NL80211_ATTR_SSID]) {
 		int len = nla_len(tb[NL80211_ATTR_SSID]);
