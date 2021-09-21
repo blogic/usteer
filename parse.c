@@ -55,6 +55,7 @@ bool parse_apmsg_node(struct apmsg_node *msg, struct blob_attr *data)
 {
 	static const struct blob_attr_info policy[__APMSG_NODE_MAX] = {
 		[APMSG_NODE_NAME] = { .type = BLOB_ATTR_STRING },
+		[APMSG_NODE_BSSID] = { .type = BLOB_ATTR_BINARY },
 		[APMSG_NODE_FREQ] = { .type = BLOB_ATTR_INT32 },
 		[APMSG_NODE_N_ASSOC] = { .type = BLOB_ATTR_INT32 },
 		[APMSG_NODE_MAX_ASSOC] = { .type = BLOB_ATTR_INT32 },
@@ -69,6 +70,8 @@ bool parse_apmsg_node(struct apmsg_node *msg, struct blob_attr *data)
 
 	blob_parse(data, tb, policy, __APMSG_NODE_MAX);
 	if (!tb[APMSG_NODE_NAME] ||
+	    !tb[APMSG_NODE_BSSID] ||
+	    blob_len(tb[APMSG_NODE_BSSID]) != 6 ||
 	    !tb[APMSG_NODE_FREQ] ||
 	    !tb[APMSG_NODE_N_ASSOC] ||
 	    !tb[APMSG_NODE_STATIONS] ||
@@ -80,6 +83,7 @@ bool parse_apmsg_node(struct apmsg_node *msg, struct blob_attr *data)
 	msg->freq = blob_get_int32(tb[APMSG_NODE_FREQ]);
 	msg->stations = tb[APMSG_NODE_STATIONS];
 	msg->ssid = blob_data(tb[APMSG_NODE_SSID]);
+	msg->bssid = blob_data(tb[APMSG_NODE_BSSID]);
 
 	msg->noise = get_int32(tb[APMSG_NODE_NOISE]);
 	msg->load = get_int32(tb[APMSG_NODE_LOAD]);

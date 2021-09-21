@@ -269,6 +269,9 @@ interface_add_node(struct usteer_remote_host *host, struct blob_attr *data)
 	node->node.max_assoc = msg.max_assoc;
 	node->node.noise = msg.noise;
 	node->node.load = msg.load;
+
+	memcpy(node->node.bssid, msg.bssid, sizeof(node->node.bssid));
+
 	snprintf(node->node.ssid, sizeof(node->node.ssid), "%s", msg.ssid);
 	usteer_node_set_blob(&node->node.rrm_nr, msg.rrm_nr);
 	usteer_node_set_blob(&node->node.node_info, msg.node_info);
@@ -538,6 +541,7 @@ static void usteer_send_node(struct usteer_node *node, struct sta_info *sta)
 	blob_put_int32(&buf, APMSG_NODE_LOAD, node->load);
 	blob_put_int32(&buf, APMSG_NODE_N_ASSOC, node->n_assoc);
 	blob_put_int32(&buf, APMSG_NODE_MAX_ASSOC, node->max_assoc);
+	blob_put(&buf, APMSG_NODE_BSSID, node->bssid, sizeof(node->bssid));
 	if (node->rrm_nr) {
 		r = blob_nest_start(&buf, APMSG_NODE_RRM_NR);
 		blobmsg_add_field(&buf, BLOBMSG_TYPE_ARRAY, "",

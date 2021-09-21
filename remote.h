@@ -48,12 +48,14 @@ enum {
 	APMSG_NODE_MAX_ASSOC,
 	APMSG_NODE_RRM_NR,
 	APMSG_NODE_NODE_INFO,
+	APMSG_NODE_BSSID,
 	__APMSG_NODE_MAX
 };
 
 struct apmsg_node {
 	const char *name;
 	const char *ssid;
+	const char *bssid;
 	int freq;
 	int n_assoc;
 	int max_assoc;
