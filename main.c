@@ -96,6 +96,7 @@ void usteer_init_defaults(void)
 	config.remote_node_timeout = 10;
 
 	config.roam_kick_delay = 100;
+	config.roam_process_timeout = 5 * 1000;
 	config.roam_scan_tries = 3;
 	config.roam_scan_interval = 10 * 1000;
 	config.roam_trigger_interval = 60 * 1000;

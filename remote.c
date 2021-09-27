@@ -155,9 +155,11 @@ static void
 interface_add_station(struct usteer_remote_node *node, struct blob_attr *data)
 {
 	struct sta *sta;
-	struct sta_info *si;
+	struct sta_info *si, *local_si;
 	struct apmsg_sta msg;
+	struct usteer_node *local_node;
 	bool create;
+	bool connect_change;
 
 	if (!parse_apmsg_sta(&msg, data)) {
 		MSG(DEBUG, "Cannot parse station in message\n");
@@ -177,10 +179,26 @@ interface_add_station(struct usteer_remote_node *node, struct blob_attr *data)
 	if (!si)
 		return;
 
+	connect_change = si->connected != msg.connected;
 	si->connected = msg.connected;
 	si->signal = msg.signal;
 	si->seen = current_time - msg.seen;
 	si->last_connected = current_time - msg.last_connected;
+
+	/* Check if client roamed to this foreign node */
+	if ((connect_change || create) && si->connected == STA_CONNECTED) {
+		for_each_local_node(local_node) {
+			local_si = usteer_sta_info_get(sta, local_node, NULL);
+			if (!local_si)
+				continue;
+
+			if (current_time - local_si->last_connected < config.roam_process_timeout) {
+				node->node.roam_destination++;
+				break;
+			}
+		}
+	}
+
 	usteer_sta_info_update_timeout(si, msg.timeout);
 }
 

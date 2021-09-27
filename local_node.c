@@ -150,10 +150,29 @@ usteer_local_node_assoc_update(struct sta_info *si, struct blob_attr *data)
 		[MSG_ASSOC] = { "assoc", BLOBMSG_TYPE_BOOL },
 	};
 	struct blob_attr *tb[__MSG_MAX];
+	struct usteer_remote_node *rn;
+	struct sta_info *remote_si;
 
 	blobmsg_parse(policy, __MSG_MAX, tb, blobmsg_data(data), blobmsg_data_len(data));
-	if (tb[MSG_ASSOC] && blobmsg_get_u8(tb[MSG_ASSOC]))
+	if (tb[MSG_ASSOC] && blobmsg_get_u8(tb[MSG_ASSOC])) {
+		if (si->connected == STA_NOT_CONNECTED) {
+			/* New connection. Check if STA roamed. */
+			for_each_remote_node(rn) {
+				remote_si = usteer_sta_info_get(si->sta, &rn->node, NULL);
+				if (!remote_si)
+					continue;
+
+				if (current_time - remote_si->last_connected < config.roam_process_timeout) {
+					rn->node.roam_source++;
+					/* Don't abort looking for roam sources here.
+					 * The client might have roamed via another node
+					 * within the roam-timeout.
+					 */
+				}
+			}
+		}
 		si->connected = STA_CONNECTED;
+	}
 
 	if (si->node->freq < 4000)
 		si->sta->seen_2ghz = 1;

@@ -87,6 +87,9 @@ struct usteer_node {
 	int n_assoc;
 	int max_assoc;
 	int load;
+
+	int roam_source;
+	int roam_destination;
 };
 
 struct usteer_scan_request {
@@ -160,6 +163,8 @@ struct usteer_config {
 	uint32_t signal_diff_threshold;
 
 	int32_t roam_scan_snr;
+	uint32_t roam_process_timeout;
+
 	uint32_t roam_scan_tries;
 	uint32_t roam_scan_interval;
 

@@ -154,6 +154,7 @@ struct cfg_item {
 	_cfg(BOOL, assoc_steering), \
 	_cfg(I32, min_connect_snr), \
 	_cfg(I32, min_snr), \
+	_cfg(U32, roam_process_timeout), \
 	_cfg(I32, roam_scan_snr), \
 	_cfg(U32, roam_scan_tries), \
 	_cfg(U32, roam_scan_interval), \
@@ -281,6 +282,8 @@ void usteer_dump_node(struct blob_buf *buf, struct usteer_node *node)
 	blobmsg_add_u32(buf, "noise", node->noise);
 	blobmsg_add_u32(buf, "load", node->load);
 	blobmsg_add_u32(buf, "max_assoc", node->max_assoc);
+	blobmsg_add_u32(buf, "roam_source", node->roam_source);
+	blobmsg_add_u32(buf, "roam_destination", node->roam_destination);
 	if (node->rrm_nr)
 		blobmsg_add_field(buf, BLOBMSG_TYPE_ARRAY, "rrm_nr",
 				  blobmsg_data(node->rrm_nr),
