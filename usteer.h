@@ -210,6 +210,7 @@ struct sta_info {
 	struct sta_info_stats stats[__EVENT_TYPE_MAX];
 	uint64_t created;
 	uint64_t seen;
+	uint64_t last_connected;
 	int signal;
 
 	enum roam_trigger_state roam_state;

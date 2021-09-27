@@ -180,6 +180,7 @@ interface_add_station(struct usteer_remote_node *node, struct blob_attr *data)
 	si->connected = msg.connected;
 	si->signal = msg.signal;
 	si->seen = current_time - msg.seen;
+	si->last_connected = current_time - msg.last_connected;
 	usteer_sta_info_update_timeout(si, msg.timeout);
 }
 
@@ -519,6 +520,7 @@ static void interface_send_msg(struct interface *iface, struct blob_attr *data){
 static void usteer_send_sta_info(struct sta_info *sta)
 {
 	int seen = current_time - sta->seen;
+	int last_connected = !!sta->connected ? 0 : current_time - sta->last_connected;
 	void *c;
 
 	c = blob_nest_start(&buf, 0);
@@ -526,6 +528,7 @@ static void usteer_send_sta_info(struct sta_info *sta)
 	blob_put_int8(&buf, APMSG_STA_CONNECTED, !!sta->connected);
 	blob_put_int32(&buf, APMSG_STA_SIGNAL, sta->signal);
 	blob_put_int32(&buf, APMSG_STA_SEEN, seen);
+	blob_put_int32(&buf, APMSG_STA_LAST_CONNECTED, last_connected);
 	blob_put_int32(&buf, APMSG_STA_TIMEOUT, config.local_sta_timeout - seen);
 	blob_nest_end(&buf, c);
 }

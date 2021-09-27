@@ -172,6 +172,8 @@ usteer_local_node_set_assoc(struct usteer_local_node *ln, struct blob_attr *cl)
 	int n_assoc = 0;
 	int rem;
 
+	usteer_update_time();
+
 	list_for_each_entry(si, &node->sta_info, node_list) {
 		if (si->connected)
 			si->connected = STA_DISCONNECTED;
@@ -193,8 +195,10 @@ usteer_local_node_set_assoc(struct usteer_local_node *ln, struct blob_attr *cl)
 			h->update_sta(node, si);
 		}
 		usteer_local_node_assoc_update(si, cur);
-		if (si->connected == STA_CONNECTED)
+		if (si->connected == STA_CONNECTED) {
+			si->last_connected = current_time;
 			n_assoc++;
+		}
 	}
 
 	node->n_assoc = n_assoc;

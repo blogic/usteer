@@ -72,6 +72,7 @@ enum {
 	APMSG_STA_TIMEOUT,
 	APMSG_STA_SEEN,
 	APMSG_STA_CONNECTED,
+	APMSG_STA_LAST_CONNECTED,
 	__APMSG_STA_MAX
 };
 
@@ -82,6 +83,7 @@ struct apmsg_sta {
 	int signal;
 	int timeout;
 	int seen;
+	int last_connected;
 };
 
 bool parse_apmsg(struct apmsg *msg, struct blob_attr *data);
