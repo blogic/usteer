@@ -54,6 +54,12 @@ enum usteer_node_type {
 	NODE_TYPE_REMOTE,
 };
 
+enum usteer_sta_connection_state {
+	STA_NOT_CONNECTED = 0,
+	STA_CONNECTED = 1,
+	STA_DISCONNECTED = 2,
+};
+
 struct sta_info;
 struct usteer_local_node;
 struct usteer_remote_host;

@@ -153,7 +153,7 @@ usteer_local_node_assoc_update(struct sta_info *si, struct blob_attr *data)
 
 	blobmsg_parse(policy, __MSG_MAX, tb, blobmsg_data(data), blobmsg_data_len(data));
 	if (tb[MSG_ASSOC] && blobmsg_get_u8(tb[MSG_ASSOC]))
-		si->connected = 1;
+		si->connected = STA_CONNECTED;
 
 	if (si->node->freq < 4000)
 		si->sta->seen_2ghz = 1;
@@ -174,7 +174,7 @@ usteer_local_node_set_assoc(struct usteer_local_node *ln, struct blob_attr *cl)
 
 	list_for_each_entry(si, &node->sta_info, node_list) {
 		if (si->connected)
-			si->connected = 2;
+			si->connected = STA_DISCONNECTED;
 	}
 
 	blobmsg_for_each_attr(cur, cl, rem) {
@@ -193,17 +193,17 @@ usteer_local_node_set_assoc(struct usteer_local_node *ln, struct blob_attr *cl)
 			h->update_sta(node, si);
 		}
 		usteer_local_node_assoc_update(si, cur);
-		if (si->connected == 1)
+		if (si->connected == STA_CONNECTED)
 			n_assoc++;
 	}
 
 	node->n_assoc = n_assoc;
 
 	list_for_each_entry(si, &node->sta_info, node_list) {
-		if (si->connected != 2)
+		if (si->connected != STA_DISCONNECTED)
 			continue;
 
-		si->connected = 0;
+		si->connected = STA_NOT_CONNECTED;
 		usteer_sta_info_update_timeout(si, config.local_sta_timeout);
 		MSG(VERBOSE, "station "MAC_ADDR_FMT" disconnected from node %s\n",
 			MAC_ADDR_DATA(si->sta->addr), usteer_node_name(node));

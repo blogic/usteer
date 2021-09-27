@@ -111,7 +111,7 @@ usteer_sta_info_get(struct sta *sta, struct usteer_node *node, bool *create)
 void
 usteer_sta_info_update_timeout(struct sta_info *si, int timeout)
 {
-	if (si->connected == 1)
+	if (si->connected == STA_CONNECTED)
 		usteer_timeout_cancel(&tq, &si->timeout);
 	else if (timeout > 0)
 		usteer_timeout_set(&tq, &si->timeout, timeout);
@@ -145,7 +145,7 @@ void
 usteer_sta_info_update(struct sta_info *si, int signal, bool avg)
 {
 	/* ignore probe request signal when connected */
-	if (si->connected == 1 && si->signal != NO_SIGNAL && !avg)
+	if (si->connected == STA_CONNECTED && si->signal != NO_SIGNAL && !avg)
 		signal = NO_SIGNAL;
 
 	if (signal != NO_SIGNAL)

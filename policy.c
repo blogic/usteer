@@ -334,7 +334,7 @@ usteer_local_node_roam_check(struct usteer_local_node *ln, struct uevent *ev)
 	min_signal = snr_to_signal(&ln->node, min_signal);
 
 	list_for_each_entry(si, &ln->node.sta_info, node_list) {
-		if (!si->connected || si->signal >= min_signal ||
+		if (si->connected != STA_CONNECTED || si->signal >= min_signal ||
 		    current_time - si->roam_kick < config.roam_trigger_interval) {
 			usteer_roam_set_state(si, ROAM_TRIGGER_IDLE, ev);
 			continue;
@@ -365,7 +365,7 @@ usteer_local_node_snr_kick(struct usteer_local_node *ln)
 	ev.threshold.ref = min_signal;
 
 	list_for_each_entry(si, &ln->node.sta_info, node_list) {
-		if (!si->connected)
+		if (si->connected != STA_CONNECTED)
 			continue;
 
 		if (si->signal >= min_signal)
@@ -434,7 +434,7 @@ usteer_local_node_kick(struct usteer_local_node *ln)
 	list_for_each_entry(si, &ln->node.sta_info, node_list) {
 		struct sta_info *tmp;
 
-		if (!si->connected)
+		if (si->connected != STA_CONNECTED)
 			continue;
 
 		if (is_more_kickable(kick1, si))
