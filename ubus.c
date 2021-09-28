@@ -146,6 +146,7 @@ struct cfg_item {
 	_cfg(U32, sta_block_timeout), \
 	_cfg(U32, local_sta_timeout), \
 	_cfg(U32, local_sta_update), \
+	_cfg(U32, max_neighbor_reports), \
 	_cfg(U32, max_retry_band), \
 	_cfg(U32, seen_policy_timeout), \
 	_cfg(U32, load_balancing_threshold), \

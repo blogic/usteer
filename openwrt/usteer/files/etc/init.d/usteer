@@ -75,7 +75,7 @@ uci_usteer() {
 	for opt in \
 		debug_level \
 		sta_block_timeout local_sta_timeout local_sta_update \
-		max_retry_band seen_policy_timeout \
+		max_neighbor_reports max_retry_band seen_policy_timeout \
 		load_balancing_threshold band_steering_threshold \
 		remote_update_interval \
 		min_connect_snr min_snr signal_diff_threshold \

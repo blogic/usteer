@@ -17,6 +17,7 @@
  *   Copyright (C) 2020 John Crispin <john@phrozen.org> 
  */
 
+#include "node.h"
 #include "usteer.h"
 
 void usteer_node_set_blob(struct blob_attr **dest, struct blob_attr *val)
@@ -35,4 +36,107 @@ void usteer_node_set_blob(struct blob_attr **dest, struct blob_attr *val)
 	if (new_len != len)
 		*dest = realloc(*dest, new_len);
 	memcpy(*dest, val, new_len);
+}
+
+static struct usteer_node *
+usteer_node_higher_bssid(struct usteer_node *node1, struct usteer_node *node2)
+{
+	int i;
+
+	for (i = 0; i < 6; i++) {
+		if (node1->bssid[i] == node2->bssid[i])
+			continue;
+		if (node1->bssid[i] < node2->bssid[i])
+			return node2;
+
+		break;
+	}
+
+	return node1;
+}
+
+static struct usteer_node *
+usteer_node_more_roam_interactions(struct usteer_node *node, struct usteer_node *ref)
+{
+	int roam_actions_node, roam_actions_ref;
+
+	roam_actions_node = node->roam_source + node->roam_destination;
+	roam_actions_ref = ref->roam_source + ref->roam_destination;
+	if (roam_actions_node < roam_actions_ref)
+		return ref;
+
+	return node;
+}
+
+static struct usteer_node *
+usteer_node_better_neighbor(struct usteer_node *node, struct usteer_node *ref)
+{
+	struct usteer_node *n1, *n2;
+
+	/**
+	 * 1. Return one node if the other one is NULL
+	 * 2. Return the node with the higher roam events.
+	 * 3. Return the node with the higher BSSID.
+	 * 4. Return first method argument.
+	 */
+
+	if (!ref)
+		return node;
+
+	if (!node)
+		return ref;
+
+	n1 = usteer_node_more_roam_interactions(node, ref);
+	n2 = usteer_node_more_roam_interactions(ref, node);
+	if (n1 == n2)
+		return n1;
+
+	/* Identical roam interactions. Check BSSID */
+	n1 = usteer_node_higher_bssid(node, ref);
+	n2 = usteer_node_higher_bssid(ref, node);
+	if (n1 == n2)
+		return n1;
+
+	return node;
+}
+
+struct usteer_node *
+usteer_node_get_next_neighbor(struct usteer_node *current_node, struct usteer_node *last)
+{
+	struct usteer_remote_node *rn;
+	struct usteer_node *next = NULL, *n1, *n2;
+
+	for_each_remote_node(rn) {
+		if (next == &rn->node)
+			continue;
+
+		if (strcmp(current_node->ssid, rn->node.ssid))
+			continue;
+
+		/* Check if this node is ranked lower than the last one */
+		n1 = usteer_node_better_neighbor(last, &rn->node);
+		n2 = usteer_node_better_neighbor(&rn->node, last);
+		if (n1 != n2) {
+			/* Identical rank. Skip. */
+			continue;
+		} else if (last && n1 == &rn->node) {
+			/* Candidate rank is higher than the last neighbor. Skip. */
+			continue;
+		}
+
+		/* Check with current next candidate */
+		n1 = usteer_node_better_neighbor(next, &rn->node);
+		n2 = usteer_node_better_neighbor(&rn->node, next);
+		if (n1 != n2) {
+			/* Identical rank. Skip. */
+			continue;
+		} else if (n1 != &rn->node) {
+			/* Next candidate ranked higher. */
+			continue;
+		}
+
+		next = n1;		
+	}
+
+	return next;
 }

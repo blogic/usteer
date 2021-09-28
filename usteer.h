@@ -152,6 +152,8 @@ struct usteer_config {
 
 	bool assoc_steering;
 
+	uint32_t max_neighbor_reports;
+
 	uint32_t band_steering_threshold;
 	uint32_t load_balancing_threshold;
 
@@ -274,6 +276,7 @@ static inline const char *usteer_node_name(struct usteer_node *node)
 }
 void usteer_node_set_blob(struct blob_attr **dest, struct blob_attr *val);
 
+struct usteer_node *usteer_node_get_next_neighbor(struct usteer_node *current_node, struct usteer_node *last);
 bool usteer_check_request(struct sta_info *si, enum usteer_event_type type);
 
 void config_set_interfaces(struct blob_attr *data);

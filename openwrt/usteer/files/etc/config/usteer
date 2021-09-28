@@ -17,6 +17,9 @@ config usteer
 	# 5 = all debug messages
 	option 'debug_level' '2'
 
+	# Maximum number of neighbor reports set for a node
+	#option max_neighbor_reports 8
+
 	# Maximum amount of time (ms) a station may be blocked due to policy decisions
 	#option sta_block_timeout 30000
 
