@@ -90,6 +90,8 @@ struct usteer_node {
 
 	int roam_source;
 	int roam_destination;
+
+	uint64_t created;
 };
 
 struct usteer_scan_request {

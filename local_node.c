@@ -409,6 +409,7 @@ usteer_get_node(struct ubus_context *ctx, const char *name)
 	ln = calloc_a(sizeof(*ln), &str, strlen(name) + 1);
 	node = &ln->node;
 	node->type = NODE_TYPE_LOCAL;
+	node->created = current_time;
 	node->avl.key = strcpy(str, name);
 	ln->ev.remove_cb = usteer_handle_remove;
 	ln->ev.cb = usteer_handle_event;

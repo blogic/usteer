@@ -257,6 +257,7 @@ interface_get_node(struct usteer_remote_host *host, const char *name)
 
 	node = calloc_a(sizeof(*node), &buf, addr_len + 1 + strlen(name) + 1);
 	node->node.type = NODE_TYPE_REMOTE;
+	node->node.created = current_time;
 
 	sprintf(buf, "%s#%s", host->addr, name);
 	node->node.avl.key = buf;
