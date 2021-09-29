@@ -56,13 +56,14 @@ usteer_node_higher_bssid(struct usteer_node *node1, struct usteer_node *node2)
 }
 
 static struct usteer_node *
-usteer_node_more_roam_interactions(struct usteer_node *node, struct usteer_node *ref)
+usteer_node_higher_roamability(struct usteer_node *node, struct usteer_node *ref)
 {
-	int roam_actions_node, roam_actions_ref;
+	uint64_t roamability_node, roamability_ref;
 
-	roam_actions_node = node->roam_source + node->roam_destination;
-	roam_actions_ref = ref->roam_source + ref->roam_destination;
-	if (roam_actions_node < roam_actions_ref)
+	roamability_node = ((uint64_t)(node->roam_source + node->roam_destination)) * current_time / ((current_time - node->created) + 1);
+	roamability_ref = ((uint64_t)(ref->roam_source + ref->roam_destination)) * current_time / ((current_time - ref->created) + 1);
+
+	if (roamability_node < roamability_ref)
 		return ref;
 
 	return node;
@@ -86,8 +87,8 @@ usteer_node_better_neighbor(struct usteer_node *node, struct usteer_node *ref)
 	if (!node)
 		return ref;
 
-	n1 = usteer_node_more_roam_interactions(node, ref);
-	n2 = usteer_node_more_roam_interactions(ref, node);
+	n1 = usteer_node_higher_roamability(node, ref);
+	n2 = usteer_node_higher_roamability(ref, node);
 	if (n1 == n2)
 		return n1;
 
