@@ -474,7 +474,7 @@ struct ubus_object usteer_obj = {
 	.n_methods = ARRAY_SIZE(usteer_methods),
 };
 
-static void
+static bool
 usteer_add_nr_entry(struct usteer_node *ln, struct usteer_node *node)
 {
 	struct blobmsg_policy policy[3] = {
@@ -485,38 +485,61 @@ usteer_add_nr_entry(struct usteer_node *ln, struct usteer_node *node)
 	struct blob_attr *tb[3];
 
 	if (!node->rrm_nr)
-		return;
+		return false;
 
 	if (strcmp(ln->ssid, node->ssid) != 0)
-		return;
+		return false;
 
 	blobmsg_parse_array(policy, ARRAY_SIZE(tb), tb,
 			    blobmsg_data(node->rrm_nr),
 			    blobmsg_data_len(node->rrm_nr));
 	if (!tb[2])
-		return;
+		return false;
 
 	blobmsg_add_field(&b, BLOBMSG_TYPE_STRING, "",
 			  blobmsg_data(tb[2]),
 			  blobmsg_data_len(tb[2]));
+	
+	return true;
+}
+
+static void
+usteer_ubus_disassoc_add_neighbors(struct sta_info *si)
+{
+	struct usteer_node *node, *last_remote_neighbor = NULL;
+	int i = 0;
+	void *c;
+
+	c = blobmsg_open_array(&b, "neighbors");
+	for_each_local_node(node) {
+		if (i >= config.max_neighbor_reports)
+			break;
+		if (usteer_add_nr_entry(si->node, node))
+			i++;
+	}
+
+	while (i < config.max_neighbor_reports) {
+		node = usteer_node_get_next_neighbor(si->node, last_remote_neighbor);
+		if (!node) {
+			/* No more nodes available */
+			break;
+		}
+
+		last_remote_neighbor = node;
+		if (usteer_add_nr_entry(si->node, node))
+			i++;
+	}
+	blobmsg_close_array(&b, c);
 }
 
 int usteer_ubus_notify_client_disassoc(struct sta_info *si)
 {
 	struct usteer_local_node *ln = container_of(si->node, struct usteer_local_node, node);
-	struct usteer_remote_node *rn;
-	struct usteer_node *node;
-	void *c;
 
 	blob_buf_init(&b, 0);
 	blobmsg_printf(&b, "addr", MAC_ADDR_FMT, MAC_ADDR_DATA(si->sta->addr));
 	blobmsg_add_u32(&b, "duration", config.roam_kick_delay);
-	c = blobmsg_open_array(&b, "neighbors");
-	for_each_local_node(node)
-		usteer_add_nr_entry(si->node, node);
-	for_each_remote_node(rn)
-		usteer_add_nr_entry(si->node, &rn->node);
-	blobmsg_close_array(&b, c);
+	usteer_ubus_disassoc_add_neighbors(si);
 	return ubus_invoke(ubus_ctx, ln->obj_id, "wnm_disassoc_imminent", b.head, NULL, 0, 100);
 }
 
