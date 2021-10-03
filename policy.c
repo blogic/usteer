@@ -155,8 +155,22 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 	if (type == EVENT_TYPE_AUTH)
 		goto out;
 
-	if (type == EVENT_TYPE_ASSOC && !config.assoc_steering)
-		goto out;
+	if (type == EVENT_TYPE_ASSOC) {
+		/* Check if assoc request has lower signal than min_signal.
+		 * If this is the case, block assoc even when assoc steering is enabled.
+		 *
+		 * Otherwise, the client potentially ends up in a assoc - kick loop.
+		 */
+		if (config.min_snr && si->signal < snr_to_signal(si->node, config.min_snr)) {
+			ev.reason = UEV_REASON_LOW_SIGNAL;
+			ev.threshold.cur = si->signal;
+			ev.threshold.ref = min_signal;
+			ret = false;
+			goto out;
+		} else if (!config.assoc_steering) {
+			goto out;
+		}
+	}
 
 	min_signal = snr_to_signal(si->node, config.min_connect_snr);
 	if (si->signal < min_signal) {
