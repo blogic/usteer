@@ -164,7 +164,7 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 		if (config.min_snr && si->signal < snr_to_signal(si->node, config.min_snr)) {
 			ev.reason = UEV_REASON_LOW_SIGNAL;
 			ev.threshold.cur = si->signal;
-			ev.threshold.ref = min_signal;
+			ev.threshold.ref = snr_to_signal(si->node, config.min_snr);
 			ret = false;
 			goto out;
 		} else if (!config.assoc_steering) {
