@@ -95,7 +95,7 @@ is_better_candidate(struct sta_info *si_cur, struct sta_info *si_new)
 }
 
 static struct sta_info *
-find_better_candidate(struct sta_info *si_ref, struct uevent *ev)
+find_better_candidate(struct sta_info *si_ref, struct uevent *ev, uint32_t required_criteria)
 {
 	struct sta_info *si;
 	struct sta *sta = si_ref->sta;
@@ -116,6 +116,9 @@ find_better_candidate(struct sta_info *si_ref, struct uevent *ev)
 			continue;
 
 		if (is_better_candidate(si, si_ref))
+			continue;
+
+		if (!(reasons & required_criteria))
 			continue;
 
 		if (ev) {
@@ -189,7 +192,7 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 		goto out;
 	}
 
-	if (!find_better_candidate(si, &ev))
+	if (!find_better_candidate(si, &ev, 0))
 		goto out;
 
 	ev.reason = UEV_REASON_BETTER_CANDIDATE;
@@ -272,7 +275,7 @@ usteer_roam_trigger_sm(struct sta_info *si)
 		if (current_time - si->roam_event < config.roam_scan_interval)
 			break;
 
-		if (find_better_candidate(si, &ev) ||
+		if (find_better_candidate(si, &ev, (1 << UEV_SELECT_REASON_SIGNAL)) ||
 		    si->roam_scan_done > si->roam_event) {
 			usteer_roam_set_state(si, ROAM_TRIGGER_SCAN_DONE, &ev);
 			break;
@@ -289,7 +292,7 @@ usteer_roam_trigger_sm(struct sta_info *si)
 		break;
 
 	case ROAM_TRIGGER_IDLE:
-		if (find_better_candidate(si, &ev)) {
+		if (find_better_candidate(si, &ev, (1 << UEV_SELECT_REASON_SIGNAL))) {
 			usteer_roam_set_state(si, ROAM_TRIGGER_SCAN_DONE, &ev);
 			break;
 		}
@@ -304,7 +307,7 @@ usteer_roam_trigger_sm(struct sta_info *si)
 			break;
 		}
 
-		if (find_better_candidate(si, &ev))
+		if (find_better_candidate(si, &ev, (1 << UEV_SELECT_REASON_SIGNAL)))
 			usteer_roam_set_state(si, ROAM_TRIGGER_WAIT_KICK, &ev);
 
 		break;
@@ -454,7 +457,7 @@ usteer_local_node_kick(struct usteer_local_node *ln)
 		if (is_more_kickable(kick1, si))
 			kick1 = si;
 
-		tmp = find_better_candidate(si, NULL);
+		tmp = find_better_candidate(si, NULL, 0);
 		if (!tmp)
 			continue;
 
