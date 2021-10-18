@@ -60,6 +60,12 @@ enum usteer_sta_connection_state {
 	STA_DISCONNECTED = 2,
 };
 
+enum usteer_beacon_measurement_mode {
+	BEACON_MEASUREMENT_PASSIVE = 0,
+	BEACON_MEASUREMENT_ACTIVE = 1,
+	BEACON_MEASUREMENT_TABLE = 2,
+};
+
 struct sta_info;
 struct usteer_local_node;
 struct usteer_remote_host;
