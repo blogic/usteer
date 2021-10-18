@@ -526,7 +526,7 @@ int usteer_ubus_trigger_client_scan(struct sta_info *si)
 	blobmsg_printf(&b, "addr", MAC_ADDR_FMT, MAC_ADDR_DATA(si->sta->addr));
 	blobmsg_add_u32(&b, "mode", BEACON_MEASUREMENT_ACTIVE);
 	blobmsg_add_u32(&b, "duration", 65535);
-	blobmsg_add_u32(&b, "channel", 255);
+	blobmsg_add_u32(&b, "channel", 0);
 	blobmsg_add_u32(&b, "op_class", si->scan_band ? 1 : 12);
 	return ubus_invoke(ubus_ctx, ln->obj_id, "rrm_beacon_req", b.head, NULL, 0, 100);
 }
