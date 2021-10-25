@@ -181,6 +181,31 @@ usteer_local_node_assoc_update(struct sta_info *si, struct blob_attr *data)
 }
 
 static void
+usteer_local_node_update_sta_rrm(const uint8_t *addr, struct blob_attr *client_attr)
+{
+	static const struct blobmsg_policy rrm_policy = {
+		.name = "rrm",
+		.type = BLOBMSG_TYPE_ARRAY,
+	};
+	struct blob_attr *sta_blob = NULL;
+	struct sta *sta;
+
+	if (!addr)
+		return;
+
+	/* Don't create the STA */
+	sta = usteer_sta_get(addr, false);
+	if (!sta)
+		return;
+
+	blobmsg_parse(&rrm_policy, 1, &sta_blob, blobmsg_data(client_attr), blobmsg_data_len(client_attr));
+	if (!sta_blob)
+		return;
+
+	sta->rrm = blobmsg_get_u32(blobmsg_data(sta_blob));
+}
+
+static void
 usteer_local_node_set_assoc(struct usteer_local_node *ln, struct blob_attr *cl)
 {
 	struct usteer_node *node = &ln->node;
@@ -218,6 +243,9 @@ usteer_local_node_set_assoc(struct usteer_local_node *ln, struct blob_attr *cl)
 			si->last_connected = current_time;
 			n_assoc++;
 		}
+
+		/* Read RRM information */
+		usteer_local_node_update_sta_rrm(addr, cur);
 	}
 
 	node->n_assoc = n_assoc;

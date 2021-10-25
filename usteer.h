@@ -242,6 +242,8 @@ struct sta {
 	uint8_t seen_5ghz : 1;
 
 	uint8_t addr[6];
+
+	uint8_t rrm;
 };
 
 extern struct ubus_context *ubus_ctx;
