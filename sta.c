@@ -202,6 +202,21 @@ usteer_handle_sta_event(struct usteer_node *node, const uint8_t *addr,
 	return ret;
 }
 
+bool
+usteer_sta_supports_beacon_measurement_mode(struct sta *sta, enum usteer_beacon_measurement_mode mode)
+{
+	switch (mode) {
+		case BEACON_MEASUREMENT_PASSIVE:
+			return sta->rrm & (1 << 4);
+		case BEACON_MEASUREMENT_ACTIVE:
+			return sta->rrm & (1 << 5);
+		case BEACON_MEASUREMENT_TABLE:
+			return sta->rrm & (1 << 6);
+	}
+
+	return false;
+}
+
 static void __usteer_init usteer_sta_init(void)
 {
 	usteer_timeout_init(&tq);

@@ -547,6 +547,11 @@ int usteer_ubus_trigger_client_scan(struct sta_info *si)
 {
 	struct usteer_local_node *ln = container_of(si->node, struct usteer_local_node, node);
 
+	if (!usteer_sta_supports_beacon_measurement_mode(si->sta, BEACON_MEASUREMENT_ACTIVE)) {
+		MSG(DEBUG, "STA does not support beacon measurement sta=" MAC_ADDR_FMT "\n", MAC_ADDR_DATA(si->sta->addr));
+		return 0;
+	}
+
 	si->scan_band = !si->scan_band;
 
 	blob_buf_init(&b, 0);
