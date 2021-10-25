@@ -104,6 +104,10 @@ usteer_sta_info_get(struct sta *sta, struct usteer_node *node, bool *create)
 	si->created = current_time;
 	*create = true;
 
+	/* Node is by default not connected. */
+	si->connected = STA_NOT_CONNECTED;
+	usteer_sta_info_update_timeout(si, config.local_sta_timeout);
+
 	return si;
 }
 
