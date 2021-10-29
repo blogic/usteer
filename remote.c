@@ -17,6 +17,8 @@
  *   Copyright (C) 2020 John Crispin <john@phrozen.org> 
  */
 
+#define _GNU_SOURCE
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
