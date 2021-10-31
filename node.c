@@ -114,6 +114,10 @@ usteer_node_get_next_neighbor(struct usteer_node *current_node, struct usteer_no
 		if (strcmp(current_node->ssid, rn->node.ssid))
 			continue;
 
+		/* Skip nodes which can't handle additional STA */
+		if (rn->node.max_assoc && rn->node.n_assoc >= rn->node.max_assoc)
+			continue;
+
 		/* Check if this node is ranked lower than the last one */
 		n1 = usteer_node_better_neighbor(last, &rn->node);
 		n2 = usteer_node_better_neighbor(&rn->node, last);
