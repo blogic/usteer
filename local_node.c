@@ -163,7 +163,7 @@ usteer_local_node_assoc_update(struct sta_info *si, struct blob_attr *data)
 					continue;
 
 				if (current_time - remote_si->last_connected < config.roam_process_timeout) {
-					rn->node.roam_source++;
+					rn->node.roam_events.source++;
 					/* Don't abort looking for roam sources here.
 					 * The client might have roamed via another node
 					 * within the roam-timeout.

@@ -274,7 +274,7 @@ usteer_ubus_set_config(struct ubus_context *ctx, struct ubus_object *obj,
 
 void usteer_dump_node(struct blob_buf *buf, struct usteer_node *node)
 {
-	void *c;
+	void *c, *roam_events;
 
 	c = blobmsg_open_table(buf, usteer_node_name(node));
 	blobmsg_printf(buf, "bssid", MAC_ADDR_FMT, MAC_ADDR_DATA(node->bssid));
@@ -283,8 +283,12 @@ void usteer_dump_node(struct blob_buf *buf, struct usteer_node *node)
 	blobmsg_add_u32(buf, "noise", node->noise);
 	blobmsg_add_u32(buf, "load", node->load);
 	blobmsg_add_u32(buf, "max_assoc", node->max_assoc);
-	blobmsg_add_u32(buf, "roam_source", node->roam_source);
-	blobmsg_add_u32(buf, "roam_destination", node->roam_destination);
+
+	roam_events = blobmsg_open_table(buf, "roam_events");
+	blobmsg_add_u32(buf, "source", node->roam_events.source);
+	blobmsg_add_u32(buf, "target", node->roam_events.target);
+	blobmsg_close_table(buf, roam_events);
+
 	if (node->rrm_nr)
 		blobmsg_add_field(buf, BLOBMSG_TYPE_ARRAY, "rrm_nr",
 				  blobmsg_data(node->rrm_nr),

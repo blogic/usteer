@@ -193,7 +193,7 @@ interface_add_station(struct usteer_remote_node *node, struct blob_attr *data)
 				continue;
 
 			if (current_time - local_si->last_connected < config.roam_process_timeout) {
-				node->node.roam_destination++;
+				node->node.roam_events.target++;
 				break;
 			}
 		}

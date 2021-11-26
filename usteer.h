@@ -88,8 +88,10 @@ struct usteer_node {
 	int max_assoc;
 	int load;
 
-	int roam_source;
-	int roam_destination;
+	struct {
+		int source;
+		int target;
+	} roam_events;
 
 	uint64_t created;
 };

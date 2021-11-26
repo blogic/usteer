@@ -60,8 +60,8 @@ usteer_node_higher_roamability(struct usteer_node *node, struct usteer_node *ref
 {
 	uint64_t roamability_node, roamability_ref;
 
-	roamability_node = ((uint64_t)(node->roam_source + node->roam_destination)) * current_time / ((current_time - node->created) + 1);
-	roamability_ref = ((uint64_t)(ref->roam_source + ref->roam_destination)) * current_time / ((current_time - ref->created) + 1);
+	roamability_node = ((uint64_t)(node->roam_events.source + node->roam_events.target)) * current_time / ((current_time - node->created) + 1);
+	roamability_ref = ((uint64_t)(ref->roam_events.source + ref->roam_events.target)) * current_time / ((current_time - ref->created) + 1);
 
 	if (roamability_node < roamability_ref)
 		return ref;
