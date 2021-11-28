@@ -249,8 +249,7 @@ usteer_local_node_set_assoc(struct usteer_local_node *ln, struct blob_attr *cl)
 		if (si->connected != STA_DISCONNECTED)
 			continue;
 
-		si->connected = STA_NOT_CONNECTED;
-		usteer_sta_info_update_timeout(si, config.local_sta_timeout);
+		usteer_sta_disconnected(si);
 		MSG(VERBOSE, "station "MAC_ADDR_FMT" disconnected from node %s\n",
 			MAC_ADDR_DATA(si->sta->addr), usteer_node_name(node));
 	}

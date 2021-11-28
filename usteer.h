@@ -275,6 +275,7 @@ struct sta_info *usteer_sta_info_get(struct sta *sta, struct usteer_node *node, 
 
 bool usteer_sta_supports_beacon_measurement_mode(struct sta *sta, enum usteer_beacon_measurement_mode mode);
 
+void usteer_sta_disconnected(struct sta_info *si);
 void usteer_sta_info_update_timeout(struct sta_info *si, int timeout);
 void usteer_sta_info_update(struct sta_info *si, int signal, bool avg);
 

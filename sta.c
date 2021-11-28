@@ -105,8 +105,7 @@ usteer_sta_info_get(struct sta *sta, struct usteer_node *node, bool *create)
 	*create = true;
 
 	/* Node is by default not connected. */
-	si->connected = STA_NOT_CONNECTED;
-	usteer_sta_info_update_timeout(si, config.local_sta_timeout);
+	usteer_sta_disconnected(si);
 
 	return si;
 }
@@ -143,6 +142,12 @@ usteer_sta_get(const uint8_t *addr, bool create)
 	INIT_LIST_HEAD(&sta->nodes);
 
 	return sta;
+}
+
+void usteer_sta_disconnected(struct sta_info *si)
+{
+	si->connected = STA_NOT_CONNECTED;
+	usteer_sta_info_update_timeout(si, config.local_sta_timeout);
 }
 
 void
