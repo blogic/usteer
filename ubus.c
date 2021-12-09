@@ -518,6 +518,8 @@ usteer_ubus_disassoc_add_neighbors(struct sta_info *si)
 	for_each_local_node(node) {
 		if (i >= config.max_neighbor_reports)
 			break;
+		if (si->node == node)
+			continue;
 		if (usteer_add_nr_entry(si->node, node))
 			i++;
 	}
