@@ -173,11 +173,6 @@ usteer_local_node_assoc_update(struct sta_info *si, struct blob_attr *data)
 		}
 		si->connected = STA_CONNECTED;
 	}
-
-	if (si->node->freq < 4000)
-		si->sta->seen_2ghz = 1;
-	else
-		si->sta->seen_5ghz = 1;
 }
 
 static void
