@@ -129,8 +129,8 @@ find_better_candidate(struct sta_info *si_ref, struct uevent *ev, uint32_t requi
 	return NULL;
 }
 
-static int
-snr_to_signal(struct usteer_node *node, int snr)
+int
+usteer_snr_to_signal(struct usteer_node *node, int snr)
 {
 	int noise = -95;
 
@@ -161,10 +161,10 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 		 *
 		 * Otherwise, the client potentially ends up in a assoc - kick loop.
 		 */
-		if (config.min_snr && si->signal < snr_to_signal(si->node, config.min_snr)) {
+		if (config.min_snr && si->signal < usteer_snr_to_signal(si->node, config.min_snr)) {
 			ev.reason = UEV_REASON_LOW_SIGNAL;
 			ev.threshold.cur = si->signal;
-			ev.threshold.ref = snr_to_signal(si->node, config.min_snr);
+			ev.threshold.ref = usteer_snr_to_signal(si->node, config.min_snr);
 			ret = false;
 			goto out;
 		} else if (!config.assoc_steering) {
@@ -172,7 +172,7 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 		}
 	}
 
-	min_signal = snr_to_signal(si->node, config.min_connect_snr);
+	min_signal = usteer_snr_to_signal(si->node, config.min_connect_snr);
 	if (si->signal < min_signal) {
 		ev.reason = UEV_REASON_LOW_SIGNAL;
 		ev.threshold.cur = si->signal;
@@ -265,7 +265,7 @@ usteer_roam_trigger_sm(struct sta_info *si)
 	};
 	int min_signal;
 
-	min_signal = snr_to_signal(si->node, config.roam_trigger_snr);
+	min_signal = usteer_snr_to_signal(si->node, config.roam_trigger_snr);
 
 	switch (si->roam_state) {
 	case ROAM_TRIGGER_SCAN:
@@ -345,7 +345,7 @@ usteer_local_node_roam_check(struct usteer_local_node *ln, struct uevent *ev)
 		return;
 
 	usteer_update_time();
-	min_signal = snr_to_signal(&ln->node, min_signal);
+	min_signal = usteer_snr_to_signal(&ln->node, min_signal);
 
 	list_for_each_entry(si, &ln->node.sta_info, node_list) {
 		if (si->connected != STA_CONNECTED || si->signal >= min_signal ||
@@ -375,7 +375,7 @@ usteer_local_node_snr_kick(struct usteer_local_node *ln)
 	if (!config.min_snr)
 		return;
 
-	min_signal = snr_to_signal(&ln->node, config.min_snr);
+	min_signal = usteer_snr_to_signal(&ln->node, config.min_snr);
 	ev.threshold.ref = min_signal;
 
 	list_for_each_entry(si, &ln->node.sta_info, node_list) {

@@ -262,6 +262,8 @@ void usteer_init_defaults(void);
 bool usteer_handle_sta_event(struct usteer_node *node, const uint8_t *addr,
 			    enum usteer_event_type type, int freq, int signal);
 
+int usteer_snr_to_signal(struct usteer_node *node, int snr);
+
 void usteer_local_nodes_init(struct ubus_context *ctx);
 void usteer_local_node_kick(struct usteer_local_node *ln);
 
