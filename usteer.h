@@ -194,6 +194,14 @@ struct usteer_config {
 	struct blob_attr *ssid_list;
 };
 
+struct usteer_bss_tm_query {
+	struct list_head list;
+
+	/* Can't use sta_info here, as the STA might already be deleted */
+	uint8_t sta_addr[6];
+	uint8_t dialog_token;
+};
+
 struct sta_info_stats {
 	uint32_t requests;
 	uint32_t blocked_cur;
@@ -273,6 +281,11 @@ void usteer_ubus_init(struct ubus_context *ctx);
 void usteer_ubus_kick_client(struct sta_info *si);
 int usteer_ubus_trigger_client_scan(struct sta_info *si);
 int usteer_ubus_notify_client_disassoc(struct sta_info *si);
+int usteer_ubus_bss_transition_request(struct sta_info *si,
+				       uint8_t dialog_token,
+				       bool disassoc_imminent,
+				       bool abridged,
+				       uint8_t validity_period);
 
 struct sta *usteer_sta_get(const uint8_t *addr, bool create);
 struct sta_info *usteer_sta_info_get(struct sta *sta, struct usteer_node *node, bool *create);

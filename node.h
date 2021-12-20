@@ -53,6 +53,9 @@ struct usteer_local_node {
 
 	struct kvlist node_info;
 
+	struct uloop_timeout bss_tm_queries_timeout;
+	struct list_head bss_tm_queries;
+
 	struct {
 		bool present;
 		struct uloop_timeout update;
