@@ -454,7 +454,7 @@ usteer_local_node_kick(struct usteer_local_node *ln)
 		if (is_more_kickable(kick1, si))
 			kick1 = si;
 
-		tmp = find_better_candidate(si, NULL, 0);
+		tmp = find_better_candidate(si, NULL, (1 << UEV_SELECT_REASON_LOAD));
 		if (!tmp)
 			continue;
 
