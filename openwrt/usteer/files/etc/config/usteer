@@ -67,6 +67,10 @@ config usteer
 	# Maximum number of client roaming scan trigger attempts
 	#option roam_scan_tries 3
 
+	# Retry scanning when roam_scan_tries is exceeded after this timeout (in ms)
+	# In case this option is set to 0, the client is kicked instead
+	#option roam_scan_timeout 0
+
 	# Minimum time (ms) between client roaming scan trigger attempts
 	#option roam_scan_interval 10000
 

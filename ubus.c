@@ -159,6 +159,7 @@ struct cfg_item {
 	_cfg(U32, roam_process_timeout), \
 	_cfg(I32, roam_scan_snr), \
 	_cfg(U32, roam_scan_tries), \
+	_cfg(U32, roam_scan_timeout), \
 	_cfg(U32, roam_scan_interval), \
 	_cfg(I32, roam_trigger_snr), \
 	_cfg(U32, roam_trigger_interval), \

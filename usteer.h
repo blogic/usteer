@@ -172,6 +172,7 @@ struct usteer_config {
 	uint32_t roam_process_timeout;
 
 	uint32_t roam_scan_tries;
+	uint32_t roam_scan_timeout;
 	uint32_t roam_scan_interval;
 
 	int32_t roam_trigger_snr;
@@ -229,6 +230,7 @@ struct sta_info {
 	uint64_t roam_event;
 	uint64_t roam_kick;
 	uint64_t roam_scan_done;
+	uint64_t roam_scan_timeout_start;
 
 	int kick_count;
 
