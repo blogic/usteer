@@ -72,12 +72,27 @@ below_max_assoc(struct sta_info *si)
 	return !node->max_assoc || node->n_assoc < node->max_assoc;
 }
 
+static bool
+over_min_signal(struct sta_info *si)
+{
+	if (config.min_snr && si->signal < usteer_snr_to_signal(si->node, config.min_snr))
+		return false;
+
+	if (config.roam_trigger_snr && si->signal < usteer_snr_to_signal(si->node, config.roam_trigger_snr))
+		return false;
+	
+	return true;
+}
+
 static uint32_t
 is_better_candidate(struct sta_info *si_cur, struct sta_info *si_new)
 {
 	uint32_t reasons = 0;
 
 	if (!below_max_assoc(si_new))
+		return 0;
+
+	if (!over_min_signal(si_new))
 		return 0;
 
 	if (below_assoc_threshold(si_cur, si_new) &&
