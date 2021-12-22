@@ -229,7 +229,7 @@ struct sta_info {
 	uint8_t roam_tries;
 	uint64_t roam_event;
 	uint64_t roam_kick;
-	uint64_t roam_scan_done;
+	uint64_t roam_scan_start;
 	uint64_t roam_scan_timeout_start;
 
 	int kick_count;

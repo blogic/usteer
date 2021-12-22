@@ -110,7 +110,7 @@ is_better_candidate(struct sta_info *si_cur, struct sta_info *si_new)
 }
 
 static struct sta_info *
-find_better_candidate(struct sta_info *si_ref, struct uevent *ev, uint32_t required_criteria)
+find_better_candidate(struct sta_info *si_ref, struct uevent *ev, uint32_t required_criteria, uint64_t max_age)
 {
 	struct sta_info *si;
 	struct sta *sta = si_ref->sta;
@@ -124,6 +124,9 @@ find_better_candidate(struct sta_info *si_ref, struct uevent *ev, uint32_t requi
 			continue;
 
 		if (strcmp(si->node->ssid, si_ref->node->ssid) != 0)
+			continue;
+
+		if (max_age && max_age < current_time - si->seen)
 			continue;
 
 		reasons = is_better_candidate(si_ref, si);
@@ -204,7 +207,7 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 		goto out;
 	}
 
-	if (!find_better_candidate(si, &ev, UEV_SELECT_REASON_ALL))
+	if (!find_better_candidate(si, &ev, UEV_SELECT_REASON_ALL, 0))
 		goto out;
 
 	ev.reason = UEV_REASON_BETTER_CANDIDATE;
@@ -283,7 +286,7 @@ usteer_roam_sm_start_scan(struct sta_info *si, struct uevent *ev)
 	}
 
 	/* We are currently in scan timeout / cooldown.
-	 * Check if we are in ROAM_TRIGGER_IDLE state and enter this stateif not.
+	 * Check if we are in ROAM_TRIGGER_IDLE state. Enter this state if not.
 	 */
 	if (si->roam_state == ROAM_TRIGGER_IDLE)
 		return;
@@ -293,26 +296,46 @@ usteer_roam_sm_start_scan(struct sta_info *si, struct uevent *ev)
 }
 
 static bool
+usteer_roam_sm_found_better_node(struct sta_info *si, struct uevent *ev, enum roam_trigger_state next_state)
+{
+	uint64_t max_age = 2 * config.roam_scan_interval;
+
+	if (max_age > current_time - si->roam_scan_start)
+		max_age = current_time - si->roam_scan_start;
+
+	if (find_better_candidate(si, ev, (1 << UEV_SELECT_REASON_SIGNAL), max_age)) {
+		usteer_roam_set_state(si, next_state, ev);
+		return true;
+	}
+
+	return false;
+}
+
+static bool
 usteer_roam_trigger_sm(struct sta_info *si)
 {
 	struct uevent ev = {
 		.si_cur = si,
 	};
-	int min_signal;
+	uint64_t min_signal;
 
 	min_signal = usteer_snr_to_signal(si->node, config.roam_trigger_snr);
 
 	switch (si->roam_state) {
 	case ROAM_TRIGGER_SCAN:
+		if (!si->roam_tries) {
+			si->roam_scan_start = current_time;
+		}
+
+		/* Check if we've found a better node regardless of the scan-interval */
+		if (usteer_roam_sm_found_better_node(si, &ev, ROAM_TRIGGER_SCAN_DONE))
+			break;
+
+		/* Only scan every scan-interval */
 		if (current_time - si->roam_event < config.roam_scan_interval)
 			break;
 
-		if (find_better_candidate(si, &ev, (1 << UEV_SELECT_REASON_SIGNAL)) ||
-		    si->roam_scan_done > si->roam_event) {
-			usteer_roam_set_state(si, ROAM_TRIGGER_SCAN_DONE, &ev);
-			break;
-		}
-
+		/* Check if no node was found within roam_scan_tries tries */
 		if (config.roam_scan_tries && si->roam_tries >= config.roam_scan_tries) {
 			if (!config.roam_scan_timeout) {
 				/* Prepare to kick client */
@@ -325,29 +348,21 @@ usteer_roam_trigger_sm(struct sta_info *si)
 			break;
 		}
 
+		/* Send beacon-request to client */
 		usteer_ubus_trigger_client_scan(si);
 		usteer_roam_sm_start_scan(si, &ev);
 		break;
 
 	case ROAM_TRIGGER_IDLE:
-		if (find_better_candidate(si, &ev, (1 << UEV_SELECT_REASON_SIGNAL))) {
-			usteer_roam_set_state(si, ROAM_TRIGGER_SCAN_DONE, &ev);
-			break;
-		}
-
 		usteer_roam_sm_start_scan(si, &ev);
 		break;
 
 	case ROAM_TRIGGER_SCAN_DONE:
-		/* Check for stale scan results, kick back to SCAN state if necessary */
-		if (current_time - si->roam_scan_done > 2 * config.roam_scan_interval) {
-			usteer_roam_sm_start_scan(si, &ev);
+		if (usteer_roam_sm_found_better_node(si, &ev, ROAM_TRIGGER_WAIT_KICK))
 			break;
-		}
 
-		if (find_better_candidate(si, &ev, (1 << UEV_SELECT_REASON_SIGNAL)))
-			usteer_roam_set_state(si, ROAM_TRIGGER_WAIT_KICK, &ev);
-
+		/* Kick back to SCAN state if candidate expired */
+		usteer_roam_sm_start_scan(si, &ev);
 		break;
 
 	case ROAM_TRIGGER_WAIT_KICK:
@@ -495,7 +510,7 @@ usteer_local_node_kick(struct usteer_local_node *ln)
 		if (is_more_kickable(kick1, si))
 			kick1 = si;
 
-		tmp = find_better_candidate(si, NULL, (1 << UEV_SELECT_REASON_LOAD));
+		tmp = find_better_candidate(si, NULL, (1 << UEV_SELECT_REASON_LOAD), 0);
 		if (!tmp)
 			continue;
 

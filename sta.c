@@ -186,7 +186,6 @@ usteer_handle_sta_event(struct usteer_node *node, const uint8_t *addr,
 
 	si = usteer_sta_info_get(sta, node, &create);
 	usteer_sta_info_update(si, signal, false);
-	si->roam_scan_done = current_time;
 	si->stats[type].requests++;
 
 	diff = si->stats[type].blocked_last_time - current_time;
