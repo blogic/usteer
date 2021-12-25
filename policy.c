@@ -192,7 +192,7 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 		goto out;
 	}
 
-	if (!find_better_candidate(si, &ev, 0))
+	if (!find_better_candidate(si, &ev, UEV_SELECT_REASON_ALL))
 		goto out;
 
 	ev.reason = UEV_REASON_BETTER_CANDIDATE;
