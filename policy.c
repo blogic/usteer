@@ -115,9 +115,6 @@ find_better_candidate(struct sta_info *si_ref, struct uevent *ev, uint32_t requi
 		if (!reasons)
 			continue;
 
-		if (is_better_candidate(si, si_ref))
-			continue;
-
 		if (!(reasons & required_criteria))
 			continue;
 
