@@ -79,6 +79,19 @@ usteer_free_node(struct ubus_context *ctx, struct usteer_local_node *ln)
 	free(ln);
 }
 
+struct usteer_local_node *usteer_local_node_by_bssid(uint8_t *bssid) {
+	struct usteer_local_node *ln;
+	struct usteer_node *n;
+
+	for_each_local_node(n) {
+		ln = container_of(n, struct usteer_local_node, node);
+		if (!memcmp(n->bssid, bssid, 6))
+			return ln;
+	}
+
+	return NULL;
+}
+
 static void
 usteer_handle_remove(struct ubus_context *ctx, struct ubus_subscriber *s,
 		    uint32_t id)

@@ -20,6 +20,32 @@
 #include "node.h"
 #include "usteer.h"
 
+struct usteer_remote_node *usteer_remote_node_by_bssid(uint8_t *bssid) {
+	struct usteer_remote_node *rn;
+
+	for_each_remote_node(rn) {
+		if (!memcmp(rn->node.bssid, bssid, 6))
+			return rn;
+	}
+
+	return NULL;
+}
+
+struct usteer_node *usteer_node_by_bssid(uint8_t *bssid) {
+	struct usteer_remote_node *rn;
+	struct usteer_local_node *ln;
+
+	rn = usteer_remote_node_by_bssid(bssid);
+	if (rn)
+		return &rn->node;
+
+	ln = usteer_local_node_by_bssid(bssid);
+	if (ln)
+		return &ln->node;
+
+	return NULL;
+}
+
 void usteer_node_set_blob(struct blob_attr **dest, struct blob_attr *val)
 {
 	int new_len;

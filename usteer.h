@@ -307,6 +307,10 @@ static inline const char *usteer_node_name(struct usteer_node *node)
 }
 void usteer_node_set_blob(struct blob_attr **dest, struct blob_attr *val);
 
+struct usteer_local_node *usteer_local_node_by_bssid(uint8_t *bssid);
+struct usteer_remote_node *usteer_remote_node_by_bssid(uint8_t *bssid);
+struct usteer_node *usteer_node_by_bssid(uint8_t *bssid);
+
 struct usteer_node *usteer_node_get_next_neighbor(struct usteer_node *current_node, struct usteer_node *last);
 bool usteer_check_request(struct sta_info *si, enum usteer_event_type type);
 
