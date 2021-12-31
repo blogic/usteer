@@ -563,6 +563,7 @@ int usteer_ubus_trigger_client_scan(struct sta_info *si)
 
 	blob_buf_init(&b, 0);
 	blobmsg_printf(&b, "addr", MAC_ADDR_FMT, MAC_ADDR_DATA(si->sta->addr));
+	blobmsg_add_string(&b, "ssid", si->node->ssid);
 	blobmsg_add_u32(&b, "mode", BEACON_MEASUREMENT_ACTIVE);
 	blobmsg_add_u32(&b, "duration", config.roam_scan_interval / 100);
 	blobmsg_add_u32(&b, "channel", 0);
