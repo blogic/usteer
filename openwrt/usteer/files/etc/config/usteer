@@ -44,6 +44,9 @@ config usteer
 	# Interval (ms) between sending state updates to other APs
 	#option remote_update_interval 1000
 
+	# Number of remote update intervals after which a remote-node is deleted
+	#option remote_node_timeout 10
+
 	# Allow rejecting assoc requests for steering purposes (0/1)
 	#option assoc_steering 0
 

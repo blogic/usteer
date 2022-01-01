@@ -152,6 +152,7 @@ struct cfg_item {
 	_cfg(U32, load_balancing_threshold), \
 	_cfg(U32, band_steering_threshold), \
 	_cfg(U32, remote_update_interval), \
+	_cfg(U32, remote_node_timeout), \
 	_cfg(BOOL, assoc_steering), \
 	_cfg(I32, min_connect_snr), \
 	_cfg(I32, min_snr), \
