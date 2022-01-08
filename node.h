@@ -25,6 +25,7 @@
 enum local_req_state {
 	REQ_IDLE,
 	REQ_CLIENTS,
+	REQ_STATUS,
 	REQ_RRM_SET_LIST,
 	REQ_RRM_GET_OWN,
 	__REQ_MAX

@@ -64,6 +64,8 @@ bool parse_apmsg_node(struct apmsg_node *msg, struct blob_attr *data)
 		[APMSG_NODE_LOAD] = { .type = BLOB_ATTR_INT32 },
 		[APMSG_NODE_RRM_NR] = { .type = BLOB_ATTR_NESTED },
 		[APMSG_NODE_NODE_INFO] = { .type = BLOB_ATTR_NESTED },
+		[APMSG_NODE_CHANNEL] = { .type = BLOB_ATTR_INT32 },
+		[APMSG_NODE_OP_CLASS] = { .type = BLOB_ATTR_INT32 },
 	};
 	struct blob_attr *tb[__APMSG_NODE_MAX];
 	struct blob_attr *cur;
@@ -89,6 +91,11 @@ bool parse_apmsg_node(struct apmsg_node *msg, struct blob_attr *data)
 	msg->load = get_int32(tb[APMSG_NODE_LOAD]);
 	msg->max_assoc = get_int32(tb[APMSG_NODE_MAX_ASSOC]);
 	msg->rrm_nr = NULL;
+
+	if (tb[APMSG_NODE_CHANNEL] && tb[APMSG_NODE_OP_CLASS]) {
+		msg->channel = blob_get_int32(tb[APMSG_NODE_CHANNEL]);
+		msg->op_class = blob_get_int32(tb[APMSG_NODE_OP_CLASS]);
+	}
 
 	cur = tb[APMSG_NODE_RRM_NR];
 	if (cur && blob_len(cur) >= sizeof(struct blob_attr) &&

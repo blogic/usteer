@@ -343,6 +343,36 @@ usteer_local_node_list_cb(struct ubus_request *req, int type, struct blob_attr *
 }
 
 static void
+usteer_local_node_status_cb(struct ubus_request *req, int type, struct blob_attr *msg)
+{
+	enum {
+		MSG_FREQ,
+		MSG_CHANNEL,
+		MSG_OP_CLASS,
+		__MSG_MAX,
+	};
+	static struct blobmsg_policy policy[__MSG_MAX] = {
+		[MSG_FREQ] = { "freq", BLOBMSG_TYPE_INT32 },
+		[MSG_CHANNEL] = { "channel", BLOBMSG_TYPE_INT32 },
+		[MSG_OP_CLASS] = { "op_class", BLOBMSG_TYPE_INT32 },
+	};
+	struct blob_attr *tb[__MSG_MAX];
+	struct usteer_local_node *ln;
+	struct usteer_node *node;
+
+	ln = container_of(req, struct usteer_local_node, req);
+	node = &ln->node;
+
+	blobmsg_parse(policy, __MSG_MAX, tb, blob_data(msg), blob_len(msg));
+	if (tb[MSG_FREQ])
+		node->freq = blobmsg_get_u32(tb[MSG_FREQ]);
+	if (tb[MSG_CHANNEL])
+		node->channel = blobmsg_get_u32(tb[MSG_CHANNEL]);
+	if (tb[MSG_FREQ])
+		node->op_class = blobmsg_get_u32(tb[MSG_OP_CLASS]);	
+}
+
+static void
 usteer_local_node_rrm_nr_cb(struct ubus_request *req, int type, struct blob_attr *msg)
 {
 	static const struct blobmsg_policy policy = {
@@ -437,6 +467,10 @@ usteer_local_node_state_next(struct uloop_timeout *timeout)
 	case REQ_CLIENTS:
 		ubus_invoke_async(ubus_ctx, ln->obj_id, "get_clients", b.head, &ln->req);
 		ln->req.data_cb = usteer_local_node_list_cb;
+		break;
+	case REQ_STATUS:
+		ubus_invoke_async(ubus_ctx, ln->obj_id, "get_status", b.head, &ln->req);
+		ln->req.data_cb = usteer_local_node_status_cb;
 		break;
 	case REQ_RRM_SET_LIST:
 		usteer_local_node_prepare_rrm_set(ln);

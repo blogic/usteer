@@ -83,6 +83,8 @@ struct usteer_node {
 
 	bool disabled;
 	int freq;
+	int channel;
+	int op_class;
 	int noise;
 	int n_assoc;
 	int max_assoc;

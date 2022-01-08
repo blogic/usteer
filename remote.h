@@ -49,6 +49,8 @@ enum {
 	APMSG_NODE_RRM_NR,
 	APMSG_NODE_NODE_INFO,
 	APMSG_NODE_BSSID,
+	APMSG_NODE_CHANNEL,
+	APMSG_NODE_OP_CLASS,
 	__APMSG_NODE_MAX
 };
 
@@ -57,6 +59,8 @@ struct apmsg_node {
 	const char *ssid;
 	const char *bssid;
 	int freq;
+	int channel;
+	int op_class;
 	int n_assoc;
 	int max_assoc;
 	int noise;
