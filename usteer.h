@@ -73,6 +73,7 @@ struct usteer_remote_host;
 struct usteer_node {
 	struct avl_node avl;
 	struct list_head sta_info;
+	struct list_head measurements;
 
 	enum usteer_node_type type;
 
@@ -155,6 +156,7 @@ struct usteer_config {
 
 	uint32_t max_retry_band;
 	uint32_t seen_policy_timeout;
+	uint32_t measurement_report_timeout;
 
 	bool assoc_steering;
 
@@ -254,6 +256,7 @@ struct sta_info {
 struct sta {
 	struct avl_node avl;
 	struct list_head nodes;
+	struct list_head measurements;
 
 	uint8_t seen_2ghz : 1;
 	uint8_t seen_5ghz : 1;
@@ -261,6 +264,27 @@ struct sta {
 	uint8_t addr[6];
 
 	uint8_t rrm;
+};
+
+struct usteer_beacon_report {
+	uint8_t rcpi;
+	uint8_t rsni;
+};
+
+struct usteer_measurement_report {
+	struct usteer_timeout timeout;
+
+	struct list_head list;
+
+	struct usteer_node *node;
+	struct list_head node_list;
+
+	struct sta *sta;
+	struct list_head sta_list;
+
+	uint64_t timestamp;
+
+	struct usteer_beacon_report beacon_report;
 };
 
 extern struct ubus_context *ubus_ctx;
@@ -334,5 +358,13 @@ void usteer_run_hook(const char *name, const char *arg);
 
 void usteer_dump_node(struct blob_buf *buf, struct usteer_node *node);
 void usteer_dump_host(struct blob_buf *buf, struct usteer_remote_host *host);
+
+struct usteer_measurement_report * usteer_measurement_report_get(struct sta *sta, struct usteer_node *node, bool create);
+void usteer_measurement_report_node_cleanup(struct usteer_node *node);
+void usteer_measurement_report_sta_cleanup(struct sta *sta);
+void usteer_measurement_report_del(struct usteer_measurement_report *mr);
+
+struct usteer_measurement_report *
+usteer_measurement_report_add_beacon_report(struct sta *sta, struct usteer_node *node, struct usteer_beacon_report *br, uint64_t timestamp);
 
 #endif

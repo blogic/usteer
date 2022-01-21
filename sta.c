@@ -35,6 +35,7 @@ usteer_sta_del(struct sta *sta)
 	    MAC_ADDR_DATA(sta->addr));
 
 	avl_delete(&stations, &sta->avl);
+	usteer_measurement_report_sta_cleanup(sta);
 	free(sta);
 }
 
@@ -140,6 +141,7 @@ usteer_sta_get(const uint8_t *addr, bool create)
 	sta->avl.key = sta->addr;
 	avl_insert(&stations, &sta->avl);
 	INIT_LIST_HEAD(&sta->nodes);
+	INIT_LIST_HEAD(&sta->measurements);
 
 	return sta;
 }

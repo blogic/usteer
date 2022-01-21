@@ -210,6 +210,7 @@ remote_node_free(struct usteer_remote_node *node)
 	list_del(&node->list);
 	list_del(&node->host_list);
 	usteer_sta_node_cleanup(&node->node);
+	usteer_measurement_report_node_cleanup(&node->node);
 	free(node);
 
 	if (!list_empty(&host->nodes))
@@ -264,6 +265,7 @@ interface_get_node(struct usteer_remote_host *host, const char *name)
 	node->name = buf + addr_len + 1;
 	node->host = host;
 	INIT_LIST_HEAD(&node->node.sta_info);
+	INIT_LIST_HEAD(&node->node.measurements);
 
 	list_add_tail(&node->list, &remote_nodes);
 	list_add_tail(&node->host_list, &host->nodes);

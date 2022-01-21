@@ -26,6 +26,9 @@ config usteer
 	# Maximum amount of time (ms) a local unconnected station is tracked
 	#option local_sta_timeout 120000
 
+	# Maximum amount of time (ms) a measurement report is stored
+	#option measurement_report_timeout 120000
+
 	# Local station information update interval (ms)
 	#option local_sta_update 1000
 

@@ -76,6 +76,7 @@ uci_usteer() {
 		debug_level \
 		sta_block_timeout local_sta_timeout local_sta_update \
 		max_neighbor_reports max_retry_band seen_policy_timeout \
+		measurement_report_timeout \
 		load_balancing_threshold band_steering_threshold \
 		remote_update_interval remote_node_timeout\
 		min_connect_snr min_snr min_snr_kick_delay signal_diff_threshold \

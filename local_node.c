@@ -71,6 +71,7 @@ usteer_free_node(struct ubus_context *ctx, struct usteer_local_node *ln)
 	usteer_local_node_pending_bss_tm_free(ln);
 	usteer_local_node_state_reset(ln);
 	usteer_sta_node_cleanup(&ln->node);
+	usteer_measurement_report_node_cleanup(&ln->node);
 	uloop_timeout_cancel(&ln->update);
 	uloop_timeout_cancel(&ln->bss_tm_queries_timeout);
 	avl_delete(&local_nodes, &ln->node.avl);
@@ -578,6 +579,7 @@ usteer_get_node(struct ubus_context *ctx, const char *name)
 	avl_insert(&local_nodes, &node->avl);
 	kvlist_init(&ln->node_info, kvlist_blob_len);
 	INIT_LIST_HEAD(&node->sta_info);
+	INIT_LIST_HEAD(&node->measurements);
 
 	ln->bss_tm_queries_timeout.cb = usteer_local_node_process_bss_tm_queries;
 	INIT_LIST_HEAD(&ln->bss_tm_queries);
@@ -623,6 +625,7 @@ usteer_check_node_enabled(struct usteer_local_node *ln)
 		MSG(INFO, "Disconnecting from local node %s\n", usteer_node_name(&ln->node));
 		usteer_local_node_state_reset(ln);
 		usteer_sta_node_cleanup(&ln->node);
+		usteer_measurement_report_node_cleanup(&ln->node);
 		uloop_timeout_cancel(&ln->update);
 		ubus_unsubscribe(ubus_ctx, &ln->ev, ln->obj_id);
 		return;

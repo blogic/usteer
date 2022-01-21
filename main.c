@@ -86,6 +86,7 @@ void usteer_init_defaults(void)
 
 	config.sta_block_timeout = 30 * 1000;
 	config.local_sta_timeout = 120 * 1000;
+	config.measurement_report_timeout = 120 * 1000;
 	config.local_sta_update = 1 * 1000;
 	config.max_retry_band = 5;
 	config.max_neighbor_reports = 8;

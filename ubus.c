@@ -149,6 +149,7 @@ struct cfg_item {
 	_cfg(U32, max_neighbor_reports), \
 	_cfg(U32, max_retry_band), \
 	_cfg(U32, seen_policy_timeout), \
+	_cfg(U32, measurement_report_timeout), \
 	_cfg(U32, load_balancing_threshold), \
 	_cfg(U32, band_steering_threshold), \
 	_cfg(U32, remote_update_interval), \
