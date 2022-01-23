@@ -276,7 +276,7 @@ static void
 usteer_roam_sm_start_scan(struct sta_info *si, struct uevent *ev)
 {
 	/* Start scanning in case we are not timeout-constrained or timeout has expired */
-	if (config.roam_scan_timeout && 
+	if (!config.roam_scan_timeout ||
 	    current_time > si->roam_scan_timeout_start + config.roam_scan_timeout) {
 		usteer_roam_set_state(si, ROAM_TRIGGER_SCAN, ev);
 		return;
