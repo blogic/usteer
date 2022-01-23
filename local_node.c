@@ -144,6 +144,46 @@ usteer_handle_bss_tm_query(struct usteer_local_node *ln, struct blob_attr *msg)
 }
 
 static int
+usteer_handle_bss_tm_response(struct usteer_local_node *ln, struct blob_attr *msg)
+{
+	enum {
+		BSS_TM_RESPONSE_ADDRESS,
+		BSS_TM_RESPONSE_STATUS_CODE,
+		__BSS_TM_RESPONSE_MAX
+	};
+	struct blobmsg_policy policy[__BSS_TM_RESPONSE_MAX] = {
+		[BSS_TM_RESPONSE_ADDRESS] = { .name = "address", .type = BLOBMSG_TYPE_STRING },
+		[BSS_TM_RESPONSE_STATUS_CODE] = { .name = "status-code", .type = BLOBMSG_TYPE_INT8 },
+	};
+	struct blob_attr *tb[__BSS_TM_RESPONSE_MAX];
+	struct sta_info *si;
+	struct sta *sta;
+	uint8_t *sta_addr;
+
+	blobmsg_parse(policy, __BSS_TM_RESPONSE_MAX, tb, blob_data(msg), blob_len(msg));
+
+	if (!tb[BSS_TM_RESPONSE_ADDRESS] || !tb[BSS_TM_RESPONSE_STATUS_CODE])
+		return 0;
+
+	sta_addr = (uint8_t *) ether_aton(blobmsg_get_string(tb[BSS_TM_RESPONSE_ADDRESS]));
+	if (!sta_addr)
+		return 0;
+
+	sta = usteer_sta_get(sta_addr, false);
+	if (!sta)
+		return 0;
+
+	si = usteer_sta_info_get(sta, &ln->node, false);
+	if (!si)
+		return 0;
+
+	si->bss_transition_response.status_code = blobmsg_get_u8(tb[BSS_TM_RESPONSE_STATUS_CODE]);
+	si->bss_transition_response.timestamp = current_time;
+
+	return 0;
+}
+
+static int
 usteer_local_node_handle_beacon_report(struct usteer_local_node *ln, struct blob_attr *msg)
 {
 	enum {
@@ -228,6 +268,8 @@ usteer_handle_event(struct ubus_context *ctx, struct ubus_object *obj,
 
 	if(!strcmp(method, "bss-transition-query")) {
 		return usteer_handle_bss_tm_query(ln, msg);
+	} else if(!strcmp(method, "bss-transition-response")) {
+		return usteer_handle_bss_tm_response(ln, msg);
 	} else if(!strcmp(method, "beacon-report")) {
 		return usteer_local_node_handle_beacon_report(ln, msg);
 	}

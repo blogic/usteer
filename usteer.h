@@ -245,6 +245,11 @@ struct sta_info {
 	uint64_t roam_scan_start;
 	uint64_t roam_scan_timeout_start;
 
+	struct {
+		uint8_t status_code;
+		uint64_t timestamp;
+	} bss_transition_response;
+
 	int kick_count;
 
 	uint32_t below_min_snr;
