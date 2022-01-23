@@ -156,6 +156,7 @@ struct cfg_item {
 	_cfg(BOOL, assoc_steering), \
 	_cfg(I32, min_connect_snr), \
 	_cfg(I32, min_snr), \
+	_cfg(U32, min_snr_kick_delay), \
 	_cfg(U32, roam_process_timeout), \
 	_cfg(I32, roam_scan_snr), \
 	_cfg(U32, roam_scan_tries), \

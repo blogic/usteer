@@ -165,6 +165,7 @@ struct usteer_config {
 	uint32_t remote_node_timeout;
 
 	int32_t min_snr;
+	uint32_t min_snr_kick_delay;
 	int32_t min_connect_snr;
 	uint32_t signal_diff_threshold;
 
@@ -241,6 +242,8 @@ struct sta_info {
 	uint64_t roam_scan_timeout_start;
 
 	int kick_count;
+
+	uint32_t below_min_snr;
 
 	uint8_t scan_band : 1;
 	uint8_t connected : 2;

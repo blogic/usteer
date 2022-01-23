@@ -422,6 +422,7 @@ usteer_local_node_roam_check(struct usteer_local_node *ln, struct uevent *ev)
 static void
 usteer_local_node_snr_kick(struct usteer_local_node *ln)
 {
+	unsigned int min_count = DIV_ROUND_UP(config.min_snr_kick_delay, config.local_sta_update);
 	struct uevent ev = {
 		.node_local = &ln->node,
 	};
@@ -438,7 +439,14 @@ usteer_local_node_snr_kick(struct usteer_local_node *ln)
 		if (si->connected != STA_CONNECTED)
 			continue;
 
-		if (si->signal >= min_signal)
+		if (si->signal >= min_signal) {
+			si->below_min_snr = 0;
+			continue;
+		} else {
+			si->below_min_snr++;
+		}
+
+		if (si->below_min_snr <= min_count)
 			continue;
 
 		si->kick_count++;

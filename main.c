@@ -103,6 +103,8 @@ void usteer_init_defaults(void)
 	config.roam_scan_interval = 10 * 1000;
 	config.roam_trigger_interval = 60 * 1000;
 
+	config.min_snr_kick_delay = 5 * 1000;
+
 	config.load_kick_enabled = false;
 	config.load_kick_threshold = 75;
 	config.load_kick_delay = 10 * 1000;

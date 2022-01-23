@@ -56,6 +56,9 @@ config usteer
 	# Minimum signal-to-noise ratio or signal level (dBm) to remain connected
 	#option min_snr 0
 
+	# Timeout after which a station with snr < min_snr will be kicked
+	#option min_snr_kick_delay 5000
+
 	# Timeout (in ms) after which a association following a disassociation is not seen
 	# as a roam
 	#option roam_process_timeout 5000

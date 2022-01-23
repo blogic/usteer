@@ -78,7 +78,7 @@ uci_usteer() {
 		max_neighbor_reports max_retry_band seen_policy_timeout \
 		load_balancing_threshold band_steering_threshold \
 		remote_update_interval remote_node_timeout\
-		min_connect_snr min_snr signal_diff_threshold \
+		min_connect_snr min_snr min_snr_kick_delay signal_diff_threshold \
 		initial_connect_delay roam_process_timeout\
 		roam_kick_delay roam_scan_tries roam_scan_timeout \
 		roam_scan_snr roam_scan_interval \
