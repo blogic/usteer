@@ -31,6 +31,14 @@
 static struct blob_buf b;
 static KVLIST(host_info, kvlist_blob_len);
 
+static void *
+blobmsg_open_table_mac(struct blob_buf *buf, uint8_t *addr)
+{
+	char str[20];
+	sprintf(str, MAC_ADDR_FMT, MAC_ADDR_DATA(addr));
+	return blobmsg_open_table(buf, str);
+}
+
 static int
 usteer_ubus_get_clients(struct ubus_context *ctx, struct ubus_object *obj,
 		       struct ubus_request_data *req, const char *method,
@@ -38,13 +46,11 @@ usteer_ubus_get_clients(struct ubus_context *ctx, struct ubus_object *obj,
 {
 	struct sta_info *si;
 	struct sta *sta;
-	char str[20];
 	void *_s, *_cur_n;
 
 	blob_buf_init(&b, 0);
 	avl_for_each_element(&stations, sta, avl) {
-		sprintf(str, MAC_ADDR_FMT, MAC_ADDR_DATA(sta->addr));
-		_s = blobmsg_open_table(&b, str);
+		_s = blobmsg_open_table_mac(&b, sta->addr);
 		list_for_each_entry(si, &sta->nodes, list) {
 			_cur_n = blobmsg_open_table(&b, usteer_node_name(si->node));
 			blobmsg_add_u8(&b, "connected", si->connected);
@@ -369,6 +375,75 @@ usteer_ubus_remote_info(struct ubus_context *ctx, struct ubus_object *obj,
 	return 0;
 }
 
+static int
+usteer_ubus_get_connected_clients(struct ubus_context *ctx, struct ubus_object *obj,
+				  struct ubus_request_data *req, const char *method,
+				  struct blob_attr *msg)
+{
+	struct usteer_measurement_report *mr;
+	struct usteer_node *node;
+	struct sta_info *si;
+	void *n, *s, *t, *a;
+
+	blob_buf_init(&b, 0);
+
+	for_each_local_node(node) {
+		n = blobmsg_open_table(&b, usteer_node_name(node));
+
+		list_for_each_entry(si, &node->sta_info, node_list) {
+			if (si->connected != STA_CONNECTED)
+				continue;
+
+			s = blobmsg_open_table_mac(&b, si->sta->addr);
+			blobmsg_add_u32(&b, "signal", si->signal);
+			blobmsg_add_u64(&b, "created", si->created);
+			blobmsg_add_u64(&b, "seen", si->seen);
+			blobmsg_add_u64(&b, "last_connected", si->last_connected);
+
+			t = blobmsg_open_table(&b, "snr-kick");
+			blobmsg_add_u32(&b, "seen-below", si->below_min_snr);
+			blobmsg_close_table(&b, t);
+
+			t = blobmsg_open_table(&b, "load-kick");
+			blobmsg_add_u32(&b, "count", si->kick_count);
+			blobmsg_close_table(&b, t);
+
+			t = blobmsg_open_table(&b, "roam-state-machine");
+			blobmsg_add_u32(&b, "tries", si->roam_tries);
+			blobmsg_add_u64(&b, "event", si->roam_event);
+			blobmsg_add_u64(&b, "kick", si->roam_kick);
+			blobmsg_add_u64(&b, "scan_start", si->roam_scan_start);
+			blobmsg_add_u64(&b, "scan_timeout_start", si->roam_scan_timeout_start);
+			blobmsg_close_table(&b, t);
+
+			t = blobmsg_open_table(&b, "bss-transition-response");
+			blobmsg_add_u32(&b, "status-code", si->bss_transition_response.status_code);
+			blobmsg_add_u64(&b, "timestamp", si->bss_transition_response.timestamp);
+			blobmsg_close_table(&b, t);
+
+			/* Measurements */
+			a = blobmsg_open_array(&b, "measurements");
+			list_for_each_entry(mr, &si->sta->measurements, sta_list) {
+				t = blobmsg_open_table(&b, "");
+				blobmsg_add_string(&b, "node", usteer_node_name(mr->node));
+				blobmsg_add_u32(&b, "rcpi", mr->beacon_report.rcpi);
+				blobmsg_add_u32(&b, "rsni", mr->beacon_report.rsni);
+				blobmsg_add_u64(&b, "timestamp", mr->timestamp);
+				blobmsg_close_table(&b, t);
+			}
+			blobmsg_close_array(&b, a);
+
+			blobmsg_close_table(&b, s);
+		}
+
+		blobmsg_close_table(&b, n);
+	}
+
+	ubus_send_reply(ctx, req, b.head);
+
+	return 0;
+}
+
 enum {
 	NODE_DATA_NODE,
 	NODE_DATA_VALUES,
@@ -463,6 +538,7 @@ static const struct ubus_method usteer_methods[] = {
 	UBUS_METHOD_NOARG("local_info", usteer_ubus_local_info),
 	UBUS_METHOD_NOARG("remote_hosts", usteer_ubus_remote_hosts),
 	UBUS_METHOD_NOARG("remote_info", usteer_ubus_remote_info),
+	UBUS_METHOD_NOARG("connected_clients", usteer_ubus_get_connected_clients),
 	UBUS_METHOD_NOARG("get_clients", usteer_ubus_get_clients),
 	UBUS_METHOD("get_client_info", usteer_ubus_get_client_info, client_arg),
 	UBUS_METHOD_NOARG("get_config", usteer_ubus_get_config),
