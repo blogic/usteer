@@ -476,7 +476,7 @@ usteer_local_node_status_cb(struct ubus_request *req, int type, struct blob_attr
 		node->freq = blobmsg_get_u32(tb[MSG_FREQ]);
 	if (tb[MSG_CHANNEL])
 		node->channel = blobmsg_get_u32(tb[MSG_CHANNEL]);
-	if (tb[MSG_FREQ])
+	if (tb[MSG_OP_CLASS])
 		node->op_class = blobmsg_get_u32(tb[MSG_OP_CLASS]);	
 }
 
