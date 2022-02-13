@@ -357,8 +357,6 @@ void usteer_interface_add(const char *name);
 void usteer_sta_node_cleanup(struct usteer_node *node);
 void usteer_send_sta_update(struct sta_info *si);
 
-int usteer_lua_init(void);
-int usteer_lua_ubus_init(void);
 void usteer_run_hook(const char *name, const char *arg);
 
 void usteer_dump_node(struct blob_buf *buf, struct usteer_node *node);
