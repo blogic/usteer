@@ -162,6 +162,43 @@ usteer_ubus_client_kick(struct ubus_context *ctx, struct ubus_object *obj,
 }
 
 static int
+usteer_ubus_disassoc_immenent(struct ubus_context *ctx, struct ubus_object *obj,
+			      struct ubus_request_data *req, const char *method,
+			      struct blob_attr *msg)
+{
+	struct blob_attr *mac_str;
+	struct usteer_node *node;
+	struct sta_info *si;
+	struct sta *sta;
+	uint8_t *mac;
+
+	blobmsg_parse(client_arg, 1, &mac_str, blob_data(msg), blob_len(msg));
+	if (!mac_str)
+		return UBUS_STATUS_INVALID_ARGUMENT;
+
+	mac = (uint8_t *) ether_aton(blobmsg_data(mac_str));
+	if (!mac)
+		return UBUS_STATUS_INVALID_ARGUMENT;
+
+	sta = usteer_sta_get(mac, false);
+	if (!sta)
+		return UBUS_STATUS_NOT_FOUND;
+
+	for_each_local_node(node) {
+		si = usteer_sta_info_get(sta, node, false);
+		if (si)
+			break;
+	}
+
+	if (!si)
+		return UBUS_STATUS_NOT_FOUND;
+
+	usteer_ubus_notify_client_disassoc(si);
+
+	return 0;
+}
+
+static int
 usteer_ubus_beacon_measure(struct ubus_context *ctx, struct ubus_object *obj,
 			   struct ubus_request_data *req, const char *method,
 			   struct blob_attr *msg)
@@ -594,6 +631,7 @@ static const struct ubus_method usteer_methods[] = {
 	UBUS_METHOD_NOARG("get_clients", usteer_ubus_get_clients),
 	UBUS_METHOD("get_client_info", usteer_ubus_get_client_info, client_arg),
 	UBUS_METHOD("kick_client", usteer_ubus_client_kick, client_arg),
+	UBUS_METHOD("disassoc_immenent", usteer_ubus_disassoc_immenent, client_arg),
 	UBUS_METHOD_NOARG("beacon_measure", usteer_ubus_beacon_measure),
 	UBUS_METHOD_NOARG("get_config", usteer_ubus_get_config),
 	UBUS_METHOD("set_config", usteer_ubus_set_config, config_policy),
@@ -693,6 +731,8 @@ int usteer_ubus_bss_transition_request(struct sta_info *si,
 int usteer_ubus_notify_client_disassoc(struct sta_info *si)
 {
 	struct usteer_local_node *ln = container_of(si->node, struct usteer_local_node, node);
+
+	MSG(DEBUG, "Trigger disassoc imminent on sta=" MAC_ADDR_FMT "\n", MAC_ADDR_DATA(si->sta->addr));
 
 	blob_buf_init(&b, 0);
 	blobmsg_printf(&b, "addr", MAC_ADDR_FMT, MAC_ADDR_DATA(si->sta->addr));
