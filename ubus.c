@@ -124,6 +124,21 @@ usteer_ubus_get_client_info(struct ubus_context *ctx, struct ubus_object *obj,
 	return 0;
 }
 
+static int
+usteer_ubus_beacon_measure(struct ubus_context *ctx, struct ubus_object *obj,
+			   struct ubus_request_data *req, const char *method,
+			   struct blob_attr *msg)
+{
+	struct usteer_node *node;
+	struct sta_info *si;
+
+	for_each_local_node(node)
+		list_for_each_entry(si, &node->sta_info, node_list)
+			if (si->connected == STA_CONNECTED)
+				usteer_ubus_trigger_client_scan(si);
+	return 0;
+}
+
 enum cfg_type {
 	CFG_BOOL,
 	CFG_I32,
@@ -541,6 +556,7 @@ static const struct ubus_method usteer_methods[] = {
 	UBUS_METHOD_NOARG("connected_clients", usteer_ubus_get_connected_clients),
 	UBUS_METHOD_NOARG("get_clients", usteer_ubus_get_clients),
 	UBUS_METHOD("get_client_info", usteer_ubus_get_client_info, client_arg),
+	UBUS_METHOD_NOARG("beacon_measure", usteer_ubus_beacon_measure),
 	UBUS_METHOD_NOARG("get_config", usteer_ubus_get_config),
 	UBUS_METHOD("set_config", usteer_ubus_set_config, config_policy),
 	UBUS_METHOD("update_config", usteer_ubus_set_config, config_policy),
@@ -655,6 +671,7 @@ int usteer_ubus_trigger_client_scan(struct sta_info *si)
 		MSG(DEBUG, "STA does not support beacon measurement sta=" MAC_ADDR_FMT "\n", MAC_ADDR_DATA(si->sta->addr));
 		return 0;
 	}
+	MSG(DEBUG, "Trigger beacon measurement on sta=" MAC_ADDR_FMT "\n", MAC_ADDR_DATA(si->sta->addr));
 
 	si->scan_band = !si->scan_band;
 
