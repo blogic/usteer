@@ -80,7 +80,7 @@ over_min_signal(struct sta_info *si)
 
 	if (config.roam_trigger_snr && si->signal < usteer_snr_to_signal(si->node, config.roam_trigger_snr))
 		return false;
-	
+
 	return true;
 }
 

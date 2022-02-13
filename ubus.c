@@ -583,7 +583,7 @@ usteer_add_nr_entry(struct usteer_node *ln, struct usteer_node *node)
 	blobmsg_add_field(&b, BLOBMSG_TYPE_STRING, "",
 			  blobmsg_data(tb[2]),
 			  blobmsg_data_len(tb[2]));
-	
+
 	return true;
 }
 

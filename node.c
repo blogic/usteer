@@ -20,7 +20,8 @@
 #include "node.h"
 #include "usteer.h"
 
-struct usteer_remote_node *usteer_remote_node_by_bssid(uint8_t *bssid) {
+struct usteer_remote_node
+*usteer_remote_node_by_bssid(uint8_t *bssid) {
 	struct usteer_remote_node *rn;
 
 	for_each_remote_node(rn) {
@@ -31,7 +32,8 @@ struct usteer_remote_node *usteer_remote_node_by_bssid(uint8_t *bssid) {
 	return NULL;
 }
 
-struct usteer_node *usteer_node_by_bssid(uint8_t *bssid) {
+struct usteer_node
+*usteer_node_by_bssid(uint8_t *bssid) {
 	struct usteer_remote_node *rn;
 	struct usteer_local_node *ln;
 
@@ -46,7 +48,8 @@ struct usteer_node *usteer_node_by_bssid(uint8_t *bssid) {
 	return NULL;
 }
 
-void usteer_node_set_blob(struct blob_attr **dest, struct blob_attr *val)
+void
+usteer_node_set_blob(struct blob_attr **dest, struct blob_attr *val)
 {
 	int new_len;
 	int len;
@@ -166,7 +169,7 @@ usteer_node_get_next_neighbor(struct usteer_node *current_node, struct usteer_no
 			continue;
 		}
 
-		next = n1;		
+		next = n1;
 	}
 
 	return next;
