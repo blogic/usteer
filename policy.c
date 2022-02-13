@@ -205,7 +205,7 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 	/* Reject if the station is younger than the Initial connect delay before responding to probe requests
 	 * this allows other APs to see packets as well
 	 */
-	if (current_time - si->created < config.initial_connect_delay) {
+	if (type == EVENT_TYPE_PROBE && current_time - si->created < config.initial_connect_delay) {
 		ev.reason = UEV_REASON_CONNECT_DELAY;
 		ev.threshold.cur = current_time - si->created;
 		ev.threshold.ref = config.initial_connect_delay;
