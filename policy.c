@@ -160,7 +160,8 @@ usteer_snr_to_signal(struct usteer_node *node, int snr)
 
 	return noise + snr;
 }
-
+/* Handle events coming in from hostapd. The function will evaluate if hostapd should
+ * respond to the request */
 bool
 usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 {
@@ -170,6 +171,7 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 	int min_signal;
 	bool ret = true;
 
+	/* auth requests are always accepted */
 	if (type == EVENT_TYPE_AUTH)
 		goto out;
 
@@ -190,6 +192,7 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 		}
 	}
 
+	/* Reject and request that has a too low signal quality */
 	min_signal = usteer_snr_to_signal(si->node, config.min_connect_snr);
 	if (si->signal < min_signal) {
 		ev.reason = UEV_REASON_LOW_SIGNAL;
@@ -199,6 +202,9 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 		goto out;
 	}
 
+	/* Reject if the station is younger than the Initial connect delay before responding to probe requests
+	 * this allows other APs to see packets as well
+	 */
 	if (current_time - si->created < config.initial_connect_delay) {
 		ev.reason = UEV_REASON_CONNECT_DELAY;
 		ev.threshold.cur = current_time - si->created;
@@ -207,9 +213,11 @@ usteer_check_request(struct sta_info *si, enum usteer_event_type type)
 		goto out;
 	}
 
+	/* Check if any of the other APs are better suited for accepting this station */
 	if (!find_better_candidate(si, &ev, UEV_SELECT_REASON_ALL, 0))
 		goto out;
 
+	/* Reject the request if a better AP was found */
 	ev.reason = UEV_REASON_BETTER_CANDIDATE;
 	ev.node_cur = si->node;
 	ret = false;
@@ -229,6 +237,7 @@ out:
 		break;
 	}
 
+	/* Turn event type into REJECT if we want to reject */
 	if (!ret)
 		ev.type++;
 
@@ -237,6 +246,8 @@ out:
 		ev.threshold.cur = si->stats[type].blocked_cur;
 		ev.threshold.ref = config.max_retry_band;
 	}
+
+	/* send the event */
 	usteer_event(&ev);
 
 	return ret;

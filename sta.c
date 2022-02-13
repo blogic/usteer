@@ -56,6 +56,7 @@ usteer_sta_info_del(struct sta_info *si)
 		usteer_sta_del(sta);
 }
 
+/* Remove all data related to a remote node */
 void
 usteer_sta_node_cleanup(struct usteer_node *node)
 {
@@ -209,6 +210,7 @@ usteer_handle_sta_event(struct usteer_node *node, const uint8_t *addr,
 	return ret;
 }
 
+/* Helper function to figure out what kind of beacon measurement a station supports */
 bool
 usteer_sta_supports_beacon_measurement_mode(struct sta *sta, enum usteer_beacon_measurement_mode mode)
 {

@@ -80,7 +80,8 @@ usteer_free_node(struct ubus_context *ctx, struct usteer_local_node *ln)
 	free(ln);
 }
 
-struct usteer_local_node *usteer_local_node_by_bssid(uint8_t *bssid) {
+struct usteer_local_node *
+usteer_local_node_by_bssid(uint8_t *bssid) {
 	struct usteer_local_node *ln;
 	struct usteer_node *n;
 
@@ -731,6 +732,7 @@ usteer_check_node_enabled(struct usteer_local_node *ln)
 	usteer_node_run_update_script(&ln->node);
 }
 
+/* A new ubus object appeared. Figure out if we want to subscribe to it. */
 static void
 usteer_register_node(struct ubus_context *ctx, const char *name, uint32_t id)
 {
@@ -753,6 +755,7 @@ usteer_register_node(struct ubus_context *ctx, const char *name, uint32_t id)
 	blobmsg_add_u32(&b, "notify_response", 1);
 	ubus_invoke(ctx, id, "notify_response", b.head, NULL, NULL, 1000);
 
+	/* Enable 802.11k support */
 	blob_buf_init(&b, 0);
 	blobmsg_add_u8(&b, "neighbor_report", 1);
 	blobmsg_add_u8(&b, "beacon_report", 1);
@@ -770,6 +773,7 @@ usteer_register_node(struct ubus_context *ctx, const char *name, uint32_t id)
 	usteer_check_node_enabled(ln);
 }
 
+/* This callback that gets called whenever a new instance appears on ubus */
 static void
 usteer_event_handler(struct ubus_context *ctx, struct ubus_event_handler *ev,
 		    const char *type, struct blob_attr *msg)
@@ -790,6 +794,8 @@ usteer_event_handler(struct ubus_context *ctx, struct ubus_event_handler *ev,
 	usteer_register_node(ctx, path, blobmsg_get_u32(tb[0]));
 }
 
+/* Start listening to ubus events when new objects connect. This is used
+ * to catch hostapd instances appearing */
 static void
 usteer_register_events(struct ubus_context *ctx)
 {
@@ -860,6 +866,7 @@ void config_get_ssid_list(struct blob_buf *buf)
 		blobmsg_add_blob(buf, config.ssid_list);
 }
 
+/* Lookup all hostapd instances on ubus */
 void
 usteer_local_nodes_init(struct ubus_context *ctx)
 {
